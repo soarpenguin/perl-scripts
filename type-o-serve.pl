@@ -41,10 +41,10 @@ while (1)
 
     while ($line = <STDIN>)
     {
-	$line =~ s/\r//;
-	$line =~ s/\n//;
-	if ($line =~ /^\./) { last; }
-	print C $line . "\r\n";
+		$line =~ s/\r//;
+		$line =~ s/\n//;
+		if ($line =~ /^\./) { last; }
+		print C $line . "\r\n";
     }
 
     close(C);
