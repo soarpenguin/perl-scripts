@@ -39,7 +39,7 @@ my ( $verbose, $all, $more, $debug, $test);
  
 GetOptions(
         'verbose+'  => \$verbose,  # the '+' means the $verbose will +1 
-								   #   when the -v or --verbose appear once
+				   #   when the -v or --verbose appear once
         'more!'     => \$more,
         'debug:i'   => \$debug,
         'lib=s'     => \@libs,
