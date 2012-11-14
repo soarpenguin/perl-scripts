@@ -10,6 +10,7 @@ my $linenum = 1;
 my $script = basename $0;
 my $debug = 0;
 my ( $number, $tab, $end, $help, $version );
+my $myversion = "0.1.0";
 
 my $Usage = " 
 Usage: $script [option]... [file]... 
@@ -23,7 +24,7 @@ Usage: $script [option]... [file]...
               display TAB characters as ^I
 
        -h, --help 
-			  display this help and exit
+              display this help and exit
 
        --version
               output version information and exit
@@ -45,6 +46,9 @@ if($debug) {
 my @files = @ARGV;
 
 if($help or $version) {
+	if($version) {
+		print "$script version $myversion\n";
+	}
 	&usage();
 }
 
