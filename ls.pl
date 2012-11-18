@@ -167,12 +167,12 @@ my ($all, $list);
 my $ret = GetOptions( 
     'l'         => \$list,
     'a'         => \$all,
-	'help'	    => \&usage,
-	'version|V' => \&version
+    'help'	    => \&usage,
+    'version|V' => \&version
 );
 
 if(! $ret) {
-	&usage();
+    &usage();
 }
 
 #------------------------------------------------------
@@ -187,16 +187,16 @@ foreach $myfile (@ARGV) {
     #$mytime = -M $myfile;
     #print "$mytime\n";
     ## $myfile
-	if($myfile eq '.') {
-		$myfile = getcwd();
-	}
+    if($myfile eq '.') {
+        $myfile = getcwd();
+    }
 
     print "---------------------$myfile-----------------------\n";
     if(-e $myfile) {
         if(-d -x _) {
             ## $myfile
             &listdir($myfile);
-           # opendir($myfile)
+            # opendir($myfile)
         } elsif (-f _) {
             printf "%18s", "$myfile";
         } else {
@@ -217,11 +217,11 @@ sub listdir {
     ## $mydir
     my $dh;
     opendir $dh, $mydir or die "Can't open the $myfile";
-   
+
     $| = 1;
-	my @files = readdir $dh;
-	close $dh;
-	@files = sort by_code @files;
+    my @files = readdir $dh;
+    close $dh;
+    @files = sort by_code @files;
 
     foreach my $file (@files) {
         ## $file;
@@ -229,7 +229,7 @@ sub listdir {
             unless ($all) {
                 next if($file =~ /^\.+$/);
             }
-            
+
             my $fname = $file;
             $file = catfile($mydir, $file);
             $count++;
@@ -254,7 +254,7 @@ sub listdir {
             } else {
                 $type = 'u';
             }
-            
+
             #my $dec_perms = $info[2] & 07777;
             #my $oct_perm_str = sprintf "%o", $dec_perms;
             $right = sprintf "%o", $info[2] & 0777;
@@ -316,29 +316,29 @@ sub listdir {
 
 # function for signal action
 sub catch_int {
-	my $signame = shift;
-	print color("red"), "Stoped by SIG$signame\n", color("reset");
-	exit;
+    my $signame = shift;
+    print color("red"), "Stoped by SIG$signame\n", color("reset");
+    exit;
 }
 $SIG{INT} = __PACKAGE__ . "::catch_int";
 $SIG{INT} = \&catch_int; # best strategy
 
 sub usage {
-	print $usage;
-	exit;
+    print $usage;
+    exit;
 }
 
 sub version {
-	print "$script version $myversion\n";
-	exit;
+    print "$script version $myversion\n";
+    exit;
 }
 
 sub by_code {
-	return "\L$a" cmp "\L$b";
+    return "\L$a" cmp "\L$b";
 }
 
 sub by_code_reverse {
-	return "\L$b" cmp "\L$a";
+    return "\L$b" cmp "\L$a";
 }
 ## $myfile
 ## @ARGV
