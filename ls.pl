@@ -219,7 +219,11 @@ sub listdir {
     opendir $dh, $mydir or die "Can't open the $myfile";
    
     $| = 1;
-    foreach my $file (readdir $dh) {
+	my @files = readdir $dh;
+	close $dh;
+	@files = sort by_code @files;
+
+    foreach my $file (@files) {
         ## $file;
         if($list) {
             unless ($all) {
@@ -329,6 +333,13 @@ sub version {
 	exit;
 }
 
+sub by_code {
+	return "\L$a" cmp "\L$b";
+}
+
+sub by_code_reverse {
+	return "\L$b" cmp "\L$a";
+}
 ## $myfile
 ## @ARGV
 
