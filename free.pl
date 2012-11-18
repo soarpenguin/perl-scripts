@@ -263,7 +263,9 @@ do {
 		}
 	}
 	
-	select(undef, undef, undef, $sleep); # use "select" for "usleep".
+	if($sleep) {
+		select(undef, undef, undef, $sleep); # use "select" for "usleep".
+	}
 	print "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n"
 
 } while ($sleep);
