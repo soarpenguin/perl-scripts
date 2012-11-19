@@ -145,7 +145,9 @@ Sort entries alphabetically if none of -cftuvSUX nor --sort is specified.
 
 Mandatory arguments to long options are mandatory for short options too.
   -a, --all                  do not ignore entries starting with .
+  -o                         like -l, but do not list group information
   -1                         list one file per line
+  -r, --reverse              reverse order while sorting
       --help     display this help and exit
       --version  output version information and exit
 
@@ -162,11 +164,13 @@ Exit status:
  1  if minor problems (e.g., cannot access subdirectory),
  2  if serious trouble (e.g., cannot access command-line argument).
 ";
-my ($all, $list); 
+my ($all, $list, $reverse, $nogid); 
 
 my $ret = GetOptions( 
     'l'         => \$list,
-    'a'         => \$all,
+    'all'       => \$all,
+    'o'         => \$nogid,
+    'reverse|r' => \$reverse,
     'help'	    => \&usage,
     'version|V' => \&version
 );
@@ -200,7 +204,7 @@ foreach $myfile (@ARGV) {
         } elsif (-f _) {
             printf "%18s", "$myfile";
         } else {
-            print "$myfile unknown type.\n"
+            print "$myfile unknown type or have no right.\n"
         }
     } else {
         print "$myfile is not existed.\n";
@@ -220,12 +224,17 @@ sub listdir {
 
     $| = 1;
     my @files = readdir $dh;
-    close $dh;
-    @files = sort by_code @files;
+    closedir($dh);
+
+    if($reverse) {
+        @files = sort by_code_reverse @files;
+    } else {
+        @files = sort by_code @files;
+    }
 
     foreach my $file (@files) {
         ## $file;
-        if($list) {
+        if($list or $nogid) {
             unless ($all) {
                 next if($file =~ /^\.+$/);
             }
@@ -234,57 +243,36 @@ sub listdir {
             $file = catfile($mydir, $file);
             $count++;
             ## $file
-            my @info = stat($file);
-            ## @info
-            my ($type, $right, $nlink, $ctime, $size, $uid, $gid);
-            if (-f $file) {
-                $type = '-';
-            } elsif (-d $file) {
-                $type = 'd';
-            } elsif (-l $file) {
-                $type = 'l';
-            } elsif (-S $file) {
-                $type = 's';
-            } elsif (-b $file) {
-                $type = 'b';
-            } elsif (-c $file) {
-                $type = 'c';
-            } elsif (-p $file) {
-                $type = 'p';
-            } else {
-                $type = 'u';
-            }
+            # get file info use the stat.
+            my ($right, $nlink, $uid, $gid, $size, $ctime) = 
+                                (stat $file)[2, 3, 4, 5, 7, 10];
+            
+            my $type = &filetype($file);
 
-            #my $dec_perms = $info[2] & 07777;
-            #my $oct_perm_str = sprintf "%o", $dec_perms;
-            $right = sprintf "%o", $info[2] & 0777;
-            $right =~ s/0/---/g;
-            $right =~ s/1/--x/g;
-            $right =~ s/2/-w-/g;
-            $right =~ s/3/-wx/g;
-            $right =~ s/4/r--/g;
-            $right =~ s/5/r-x/g;
-            $right =~ s/6/rw-/g;
-            $right =~ s/7/rwx/g;
-            ## $right
-            $nlink = $info[3];
-            $uid   = getpwuid($info[4]); #from user id to user name.
-            $gid   = getgrgid($info[5]); #from group id to group name.
-            $size  = $info[7];
+            $right = &right_string($right);
+            $uid   = getpwuid($uid); #from user id to user name.
+            $gid   = getgrgid($gid); #from group id to group name.
+
             # the format of below: Sun Nov 11 14:18:02 2012
             # $ctime = strftime "%a %b %e %H:%M:%S %Y", localtime($info[10]);
-            $ctime = strftime "%b %e %H:%M %Y", localtime($info[10]);
-            printf "%1s%9s %3d %8s %8s %8d %12s", $type, $right, $nlink, $uid, $gid, $size, $ctime;
-            #printf "%-2d %-4d %-4d %-8d", $nlink, $uid, $gid, $size;
+            $ctime = strftime "%b %e %H:%M %Y", localtime($ctime);
+
+            # the -o option just like -l, no group id.
+            if($nogid) {
+                printf "%1s%9s %3d %8s %8d %12s", $type, $right, $nlink, $uid, $size, $ctime;
+            } else {
+                printf "%1s%9s %3d %8s %8s %8d %12s", $type,$right,$nlink,$uid,$gid,$size,$ctime;
+            }
+
             if(-d $file) {
                 print color("blue");
+                $fname .= '/';
             } elsif (-x _) {
                 print color("green"); 
+                $fname .= '*';
             }
-            printf " %-18s", $fname;
+            printf " %-18s\n", $fname;
             print color("reset");
-            print "\n";
-            ## @info
 
         } else {
             unless ($all) {
@@ -311,7 +299,6 @@ sub listdir {
     if($count % 5 and !$list) {
         print "\n";
     }
-    closedir($dh);
 }
 
 # function for signal action
@@ -339,6 +326,52 @@ sub by_code {
 
 sub by_code_reverse {
     return "\L$b" cmp "\L$a";
+}
+
+sub filetype {
+    my $file = shift;
+    my $type;
+
+    if (-f $file) {
+        $type = '-';
+    } elsif (-d _) {
+        $type = 'd';
+        #$fname .= '/';
+    } elsif (-l _) {
+        $type = 'l';
+    } elsif (-S _) {
+        $type = 's';
+    } elsif (-b _) {
+        $type = 'b';
+    } elsif (-c _) {
+        $type = 'c';
+    } elsif (-p _) {
+        $type = 'p';
+    } else {
+        $type = 'u';
+    }
+
+    return $type;
+}
+# convert a decimal to right string like 'rwx---rw-'
+sub right_string {
+    my $right = shift;
+    $right &= 0x777;
+
+    #my $dec_perms = $right & 07777;
+    #my $oct_perm_str = sprintf "%o", $dec_perms;
+    $right = sprintf "%o", $right & 0777;
+    $right =~ s/0/---/g;
+    $right =~ s/1/--x/g;
+    $right =~ s/2/-w-/g;
+    $right =~ s/3/-wx/g;
+    $right =~ s/4/r--/g;
+    $right =~ s/5/r-x/g;
+    $right =~ s/6/rw-/g;
+    $right =~ s/7/rwx/g;
+    ## $right
+
+    return $right;
 }
 ## $myfile
 ## @ARGV
