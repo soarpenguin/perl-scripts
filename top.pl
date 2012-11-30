@@ -4,7 +4,7 @@
 # top.pl -- ***********. {{{1
 #
 # Author:  soarpenguin <soarpenguin@gmail.com>
-#          First release Nov.14 2012
+#          First release Nov.27 2012
 # 1}}}
 
 use strict;
@@ -34,9 +34,9 @@ Usage: $script [option]...
 ";
 
 my $ret = GetOptions( 
-	'delay|d=i' => \$delay,   
+    'delay|d=f' => \$delay,   
     'help|h'	=> \&usage,
-	'version|V' => \&version
+    'version|V' => \&version
 );
 
 $| = 1;
@@ -49,11 +49,9 @@ if(! -e $proc) {
     &mydie("The /proc filesyestem is not mounted, try \$mount /proc");
 }
 
-my @files = ();
-my $dh;
 
-if(! opendir $dh, $proc) {
-    &mydie("Open the $proc failed");
+if(!$delay) {
+    $delay = 2;
 }
 
 my $col = 80;
@@ -79,7 +77,16 @@ if($col < 72) {
 close($tty_fh);
 #print "\n";
 
+my @files;
+my $dh;
+
+&clrscr();
 do {
+    
+    @files = ();
+    if(! opendir $dh, $proc) {
+        &mydie("Open the $proc failed");
+    }
     @files = readdir($dh);
     closedir($dh);
 
@@ -90,13 +97,14 @@ do {
 
     #my $clear_screen = `clear`;
     #print $clear_screen;
-    &clrscr();
+    &gotoxy(0, 0);
 
     my $now = strftime "%H:%M:%S", localtime();
     #my ($min, $hour, $day, $fd);
     my $uptime;
     my $fd;
-    open($fd, "<", File::Spec->catfile($proc, "uptime"));
+    #open($fd, "<", File::Spec->catfile($proc, "uptime"));
+    open($fd, "<",  "$proc/uptime"); 
     if ( !$fd ) {
         $uptime = 0;
     } else {
@@ -116,7 +124,8 @@ do {
     #     ### $day
     # }
     my ($sysload1, $sysload5, $sysload15);
-    open($fd, "<", File::Spec->catfile($proc, "loadavg"));
+    #open($fd, "<", File::Spec->catfile($proc, "loadavg"));
+    open($fd, "<", "$proc/loadavg");
     if(!$fd) {
         ($sysload1, $sysload5, $sysload15) = (0, 0, 0);
     } else {
@@ -254,14 +263,16 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
                 ##endif
             };
         #$proc_t -> {"pid"} = $file;
-        $file = File::Spec->catfile($proc, $file);
+        #$file = File::Spec->catfile($proc, $file);
+        $file = "$proc/$file";
 
         if(! -e $file) {
             next;
         } else {
             #----------/proc/#/stat
             my $fd;
-            open($fd, "<", File::Spec->catfile($file, "stat"));
+            #open($fd, "<", File::Spec->catfile($file, "stat"));
+            open($fd, "<", "$file/stat");
             next unless $fd;
             my $line = <$fd>;
             close $fd;
@@ -290,7 +301,8 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
                 $proc_t->{"priority"} = 'RT';
             }
             #----------/proc/#/status
-            open($fd, "<", File::Spec->catfile($file, "status"));
+            #open($fd, "<", File::Spec->catfile($file, "status"));
+            open($fd, "<", "$file/status");
                 
             next unless $fd;
             my @lines = <$fd>;
@@ -319,7 +331,8 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
                 }
             }
             #----------/proc/#/statm
-            open($fd, "<", File::Spec->catfile($file, "statm"));
+            #open($fd, "<", File::Spec->catfile($file, "statm"));
+            open($fd, "<", "$file/statm");
 
             next unless $fd;
             $line = <$fd>;
@@ -330,7 +343,8 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
               $proc_t->{"dt"} ) = split(/\s+/, $line);
 
             #----------/proc/cmdline
-            open($fd, "<", File::Spec->catfile($file, "cmdline"));
+            #open($fd, "<", File::Spec->catfile($file, "cmdline"));
+            open($fd, "<", "$file/cmdline");
 
             next unless $fd;
             $line = <$fd>;
@@ -338,7 +352,8 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
             $proc_t->{"cmdline"} = $line;
             
             #----------/proc/environ
-            my $result = open($fd, "<", File::Spec->catfile($file, "environ"));
+            #my $result = open($fd, "<", File::Spec->catfile($file, "environ"));
+            my $result = open($fd, "<", "$file/environ");
             if($result) {
                 next unless $fd;
                 $line = <$fd>;
@@ -360,10 +375,12 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
             $proc_t->{"cmd"} .= " <defunct>"
         }
 
-        push @process $proc_t;
+        push @process, $proc_t;
     }
     
-    @process =  sort { $a->{"vsize"} <=> $b->{"vsize"} } @process;
+    @process =  reverse sort { $a->{"vsize"} <=> $b->{"vsize"} } @process;
+
+    ## @process
     while($count < $row) {
         printf("%5s %-8.9s %3s %3s %5.5s %4.4s %4.4s %1s %4.1s %4.1s %9.8s %-15s\n", 
                 $process[$count]->{"pid"}, $process[$count]->{"euser"},
@@ -387,7 +404,9 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
     }
     
     $count = 0;
-} while (0); 
+    select(undef, undef, undef, $delay);
+
+} while (1); 
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # function for signal action
