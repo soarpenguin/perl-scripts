@@ -150,9 +150,10 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
     print POPCOLOR "";
     #print color("reset");
     my $count = 0;
-
+    my @process;
+    $#process=-1;
+    
     foreach my $file (@files) {
-        my @process;
         my $proc_t = 
             {   "pid" => "", # process id 
                 "ppid" => "", # pid of parent process */
@@ -190,21 +191,21 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
                 "size" => "", # total # of pages of memory */
                 "resident" => "", # number of resident set (non-swapped) pages (4k) */
                 "share" => "", # number of pages of shared (mmap'd) memory */
-                "trs" => "", # text resident set size */
-                "lrs" => "", # shared-lib resident set size */
-                "drs" => "", # data resident set size */
-                "dt" => "", # dirty pages */
+                "trs" => "0", # text resident set size */
+                "lrs" => "0", # shared-lib resident set size */
+                "drs" => "0", # data resident set size */
+                "dt" => "0", # dirty pages */
                 #unsigned long
-                "vm_size" => "", # same as vsize in kb */
+                "vm_size" => 0, # same as vsize in kb */
                 "vm_lock" => "", # locked pages in kb */
-                "vm_rss" => "", # same as rss in kb */
-                "vm_data" => "", # data size */
-                "vm_stack" => "", # stack size */
-                "vm_exe" => "", # executable size */
-                "vm_lib" => "", # library size (all pages, not just used ones) */
+                "vm_rss" => 0, # same as rss in kb */
+                "vm_data" => 0, # data size */
+                "vm_stack" => 0, # stack size */
+                "vm_exe" => 0, # executable size */
+                "vm_lib" => 0, # library size (all pages, not just used ones) */
                 "rtprio" => "", # real-time priority */
                 "sched" => "", # scheduling class */
-                "vsize" => "", # number of pages of virtual memory ... */
+                "vsize" => 0, # number of pages of virtual memory ... */
                 "rss_rlim" => "", # resident set size limit? */
                 "flags" => "", # kernel flags for the process */
                 "min_flt" => "", # number of minor page faults since process start */
@@ -344,7 +345,7 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
                 close $fd;
                 $proc_t->{"environ"} = $line;
             } else {
-                $proc_t->{"environ"} = ""; 
+                $proc_t->{"environ"} = " "; 
             }
 
             $proc_t->{"euser"} = getpwuid($proc_t->{"euid"});
@@ -359,24 +360,33 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
             $proc_t->{"cmd"} .= " <defunct>"
         }
 
-        if($count < $row) {
-    printf("%5s %-8.9s %3s %3s %5.5s %4.4s %4.4s %1s %4.1s %4.1s %9.8s %-15s\n", 
-                $proc_t->{"pid"}, $proc_t->{"euser"},
-                $proc_t->{"priority"}, $proc_t->{"nice"},
-                $proc_t->{"vsize"}, $proc_t->{"resident"},
-                $proc_t->{"share"}, $proc_t->{"state"},
-                $proc_t->{"pcpu"}, $proc_t->{"vm_size"}, # XXX 
-                $proc_t->{"timeout"}, $proc_t->{"cmd"}
-            );
-            ## $proc_t
-            # last;
-            $count++;
-        } else {
-            $count = 0;
-            last;
-        }
+        push @process $proc_t;
     }
-
+    
+    @process =  sort { $a->{"vsize"} <=> $b->{"vsize"} } @process;
+    while($count < $row) {
+        printf("%5s %-8.9s %3s %3s %5.5s %4.4s %4.4s %1s %4.1s %4.1s %9.8s %-15s\n", 
+                $process[$count]->{"pid"}, $process[$count]->{"euser"},
+                $process[$count]->{"priority"}, $process[$count]->{"nice"},
+                $process[$count]->{"vsize"}, $process[$count]->{"resident"},
+                $process[$count]->{"share"}, $process[$count]->{"state"},
+                $process[$count]->{"pcpu"}, $process[$count]->{"vm_size"}, # XXX 
+                $process[$count]->{"timeout"}, $process[$count]->{"cmd"}
+            );
+        #printf("%5s %-8.9s %3s %3s %5.5s %4.4s %4.4s %1s %4.1s %4.1s %9.8s %-15s\n", 
+                #$proc_t->{"pid"}, $proc_t->{"euser"},
+                #$proc_t->{"priority"}, $proc_t->{"nice"},
+                #$proc_t->{"vsize"}, $proc_t->{"resident"},
+                #$proc_t->{"share"}, $proc_t->{"state"},
+                #$proc_t->{"pcpu"}, $proc_t->{"vm_size"}, # XXX 
+                #$proc_t->{"timeout"}, $proc_t->{"cmd"}
+            #);
+        ## $proc_t
+        # last;
+        $count++;
+    }
+    
+    $count = 0;
 } while (0); 
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
