@@ -19,7 +19,9 @@ use Term::ANSIColor;
 #print color("red"), "Stop!\n", color("reset");
 #print color("green"), "Go!\n", color("reset");
 
-my $delay;
+my ($delay, $user);
+my $numbers = -1;
+my ($sleeping, $running, $zombie, $stoped);
 my $proc = '/proc';
 my $myversion = '0.1.0';
 my $script = &_my_program();
@@ -27,14 +29,37 @@ my $script = &_my_program();
 my $usage = "
 Usage: $script [option]...
 
+       -d : Delay time interval as:  -d ss.tt (seconds.tenths)
+            Specifies the delay between screen updates, and overrides the
+            corresponding  value  in one's personal configuration file or
+            the startup default.  Later this can be changed with the  'd'
+            or 's' interactive commands.
+
+            Fractional  seconds are honored, but a negative number is not
+            allowed.  In all cases, however, such changes are  prohibited
+            if  top  is running in 'Secure mode', except for root (unless
+            the 's' command-line option was used).  For additional infor‐
+            mation  on  'Secure  mode' see topic 5a. SYSTEM Configuration
+            File.
+
        -h, --help 
               Display this help and exit
+
+       -n : Number of iterations limit as:  -n number
+            Specifies  the  maximum  number of iterations, or frames, top
+            should produce before ending.
+
+       -u : Monitor by user as:  -u somebody
+            Monitor only processes with an effective  UID  or  user  name
+            matching that given.
 
        -V     Display version information.
 ";
 
 my $ret = GetOptions( 
     'delay|d=f' => \$delay,   
+    'number|n=i'=> \$numbers,
+    'user|u=s'  => \$user,
     'help|h'	=> \&usage,
     'version|V' => \&version
 );
@@ -42,18 +67,28 @@ my $ret = GetOptions(
 $| = 1;
 
 if(! $ret) {
-	&usage();
+    &usage();
 }
 
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# detect the /proc mounted. the system info from it.
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 if(! -e $proc) {
     &mydie("The /proc filesyestem is not mounted, try \$mount /proc");
 }
 
-
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# set the delay time of every display.
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 if(!$delay) {
-    $delay = 2;
+    $delay = 3;
+} elsif($delay < 0) {
+    $delay *= -1;
 }
 
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# detect the size of terminal, set the row number of display item.
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 my $col = 80;
 my $row = 24;
 
@@ -64,25 +99,63 @@ my $winsize;
 unless (ioctl($tty_fh, &TIOCGWINSZ, $winsize='')) {
     CORE::die sprintf "$0: ioctl TIOCGWINSZ (%08x: $!)\n", &TIOCGWINSZ;
 }
+close($tty_fh);
 
 #my ($col, $row, $xpixel, $ypixel) = unpack('S4', $winsize);
 ($row, $col) = unpack('S4', $winsize);
-#print "(row,col) = ($row,$col)";
-if($col < 72) {
-    $row /= 2;
+if($col < 80) {
+	print color("red"), "Need >= 80 column screen.\n", color("reset");
+    exit;
 } else {
-    $row -= 7;
+    $row -= 8;
 }
-#print "(row,col) = ($row,$col)";
-close($tty_fh);
-#print "\n";
 
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# function for signal action
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub catch_int {
+	my $signame = shift;
+    &gotoxy($row+8, 0);
+	print color("red"), "Stoped by SIG$signame\n", color("reset");
+    &showcursor();
+    # &echo();
+	exit;
+}
+$SIG{INT} = __PACKAGE__ . "::catch_int";
+$SIG{INT} = \&catch_int; # best strategy
+$SIG{QUIT} = __PACKAGE__ . "::catch_int";
+$SIG{QUIT} = \&catch_int;
+$SIG{TERM} = __PACKAGE__ . "::catch_int";
+$SIG{TERM} = \&catch_int; # best strategy
+
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#               the main function is start                      +
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 my @files;
 my $dh;
 
+my @cpuinfo = &get_cpu_info();
+## @cpuinfo
+if(!@cpuinfo) {
+    &mydie("Get cpu infomation failed!");
+}
+
+my %cpuhash = (
+    "u" => $cpuinfo[0]->{"u"},
+    "s" => $cpuinfo[0]->{"s"},
+    "n" => $cpuinfo[0]->{"n"},
+    "i" => $cpuinfo[0]->{"i"},
+    "w" => $cpuinfo[0]->{"w"}
+);
+## %cpuhash
+
 &clrscr();
+&hidecursor();
+# &noecho();
 do {
     
+    ($sleeping, $running, $zombie, $stoped) = (0, 0, 0, 0);
     @files = ();
     if(! opendir $dh, $proc) {
         &mydie("Open the $proc failed");
@@ -119,9 +192,6 @@ do {
     #     print "$tmp\n";
     #     close($fd);
     #     (undef, $min, $hour, $day)= localtime($tmp);
-    #     ### $min
-    #     ### $hour
-    #     ### $day
     # }
     my ($sysload1, $sysload5, $sysload15);
     #open($fd, "<", File::Spec->catfile($proc, "loadavg"));
@@ -132,35 +202,11 @@ do {
         ($sysload1, $sysload5, $sysload15) = split(/\s+/, <$fd>);
         close($fd);
     }
-    printf("%5s - %8s up  %3s,  3 users,  load average: %3s, %3s, %3s\n", 
-        $script, $now, $uptime, $sysload1, $sysload5, $sysload15);
-    ## $uptime
-    # if($day > 0) {
-    #     printf("%5s - %8s up %3s days, %2s:%2s,  3 users,  load average: %3s, %3s, %3s\n", 
-    #         $script, $now, $day, $hour, $min, $sysload1, $sysload5, $sysload15);
-    # } else {
-    #     printf("%5s - %8s up  %2s:%2s,  3 users,  load average: %3s, %3s, %3s\n", 
-    #         $script, $now, $hour, $min, $sysload1, $sysload5, $sysload15);
-    # }
-#       print("Tasks: $num total,   2 running, 163 sleeping,   0 stopped,   1 zombie
-#   Cpu(s):  0.7%us,  0.6%sy,  0.1%ni, 98.3%id,  0.3%wa,  0.0%hi,  0.0%si,  0.0%st
-#   Mem:   ${memtotal}k total,   ${memused}k used,   ${memfree}k free,    ${buf}k buffers
-#   Swap:  ${swaptotal}k total,   ${swapused}k used,  ${swapfree}k free,   ${cache}k cached\n");
-    printf("Tasks: %3d total,   2 running, 163 sleeping,   0 stopped,   1 zombie
-Cpu(s):  0.7%%us,  0.6%%sy,  0.1%%ni, 98.3%%id,  0.3%%wa,  0.0%%hi,  0.0%%si,  0.0%%st
-Mem:  %8dk total, %8dk used, %8dk free, %8dk buffers
-Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
-    $num, $memtotal, $memused, $memfree, $buf, $swaptotal, $swapused, $swapfree, $cache);
 
-    #print "\n";
-    use Term::ANSIColor qw(:pushpop);
-    print PUSHCOLOR WHITE ON_BLACK 
-        "  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND \n";
-    print POPCOLOR "";
-    #print color("reset");
     my $count = 0;
     my @process;
     $#process=-1;
+    my $cputotal = 0;
     
     foreach my $file (@files) {
         my $proc_t = 
@@ -169,12 +215,13 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
                 
                 "pcpu" => "0", # %CPU usage (is not filled in by readproc!!!) */
                 "state" => "", # single-char code for process state (S=sleeping) */
-                "utime" => "", # user-mode CPU time accumulated by process */
-                "stime" => "", # kernel-mode CPU time accumulated by process */
+                "utime" => "0", # user-mode CPU time accumulated by process */
+                "stime" => "0", # kernel-mode CPU time accumulated by process */
                 # and so on...
-                "cutime" => "", # cumulative utime of process and reaped children */
-                "cstime" => "", # cumulative stime of process and reaped children */
-                "start_time" => "", # start time of process -- seconds since 1-1-70 */
+                "cutime" => "0", # cumulative utime of process and reaped children */
+                "cstime" => "0", # cumulative stime of process and reaped children */
+                "start_time" => "0", # start time of process -- seconds since 1-1-70 */
+                "tics" => "0", # XXX for store the utime+stime
                 ## ifdef SIGNAL_STRING
                 # char
                 # Linux 2.1.7x and up have 64 signals. Allow 64, plus '\0' and padding. */
@@ -297,8 +344,22 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
             if($proc_t->{"tty"} == 0) {
                 $proc_t->{"tty"} = -1;
             }
+
             if($proc_t->{"priority"} < 0) {
                 $proc_t->{"priority"} = 'RT';
+            }
+
+            $proc_t->{"pcpu"} = $proc_t->{"utime"} + $proc_t->{"stime"} - $proc_t->{"tics"};
+            $proc_t->{"tics"} = $proc_t->{"utime"} + $proc_t->{"stime"};
+
+            if($proc_t->{"state"} eq 'S' or $proc_t->{"state"} eq 'D') {
+                $sleeping++;
+            } elsif($proc_t->{"state"} eq 'T') {
+                $stoped++;
+            } elsif($proc_t->{"state"} eq 'Z') {
+                $zombie++;
+            } elsif($proc_t->{"state"} eq 'R') {
+                $running++;
             }
             #----------/proc/#/status
             #open($fd, "<", File::Spec->catfile($file, "status"));
@@ -378,11 +439,69 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
         push @process, $proc_t;
     }
     
-    @process =  reverse sort { $a->{"vsize"} <=> $b->{"vsize"} } @process;
+    @process =  reverse sort { $a->{"pcpu"} <=> $b->{"pcpu"} } @process;
+
+#----------------- get infomation of cpu ---------------------------------
+    $#cpuinfo=-1;
+    @cpuinfo = get_cpu_info();
+    my ($u, $n, $s, $i, $w) = (
+        $cpuinfo[0]->{"u"} - $cpuhash{"u"},
+        $cpuinfo[0]->{"s"} - $cpuhash{"s"},
+        $cpuinfo[0]->{"n"} - $cpuhash{"n"},
+        $cpuinfo[0]->{"i"} - $cpuhash{"i"},
+        $cpuinfo[0]->{"w"} - $cpuhash{"w"}
+    );
+    %cpuhash = (
+        "u" => $cpuinfo[0]->{"u"},
+        "s" => $cpuinfo[0]->{"s"},
+        "n" => $cpuinfo[0]->{"n"},
+        "i" => $cpuinfo[0]->{"i"},
+        "w" => $cpuinfo[0]->{"w"}
+    );
+    if($u < 0) { $u = 0; }
+    if($s < 0) { $u = 0; }
+    if($n < 0) { $u = 0; }
+    if($i < 0) { $u = 0; }
+    if($w < 0) { $u = 0; }
+    my $total = $u + $s + $n + $i + $w;
+    if($total < 1) { $total = 1; }
+    my $scale = 100.0 / $total;
+
+#----------------- the head infomation of display.------------------------
+    printf("%5s - %8s up  %3s,  3 users,  load average: %3s, %3s, %3s\n", 
+        $script, $now, $uptime, $sysload1, $sysload5, $sysload15);
+    ## $uptime
+    # if($day > 0) {
+    #     printf("%5s - %8s up %3s days, %2s:%2s,  3 users,  load average: %3s, %3s, %3s\n", 
+    #         $script, $now, $day, $hour, $min, $sysload1, $sysload5, $sysload15);
+    # } else {
+    #     printf("%5s - %8s up  %2s:%2s,  3 users,  load average: %3s, %3s, %3s\n", 
+    #         $script, $now, $hour, $min, $sysload1, $sysload5, $sysload15);
+    # }
+#       print("Tasks: $num total,   2 running, 163 sleeping,   0 stopped,   1 zombie
+#   Cpu(s):  0.7%us,  0.6%sy,  0.1%ni, 98.3%id,  0.3%wa,  0.0%hi,  0.0%si,  0.0%st
+#   Mem:   ${memtotal}k total,   ${memused}k used,   ${memfree}k free,    ${buf}k buffers
+#   Swap:  ${swaptotal}k total,   ${swapused}k used,  ${swapfree}k free,   ${cache}k cached\n");
+    printf("Tasks: %3d total,   %2d running, %3d sleeping, %3d stopped, %2d zombie
+Cpu(s):  %3.1f%%us, %3.1f%%sy, %3.1f%%ni, %3.1f%%id, %3.1f%%wa, 0.0%%hi, 0.0%%si, 0.0%%st
+Mem:  %8dk total, %8dk used, %8dk free, %8dk buffers
+Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
+        $num, $running, $sleeping, $stoped, $zombie, 
+        $u*$scale, $s*$scale, $n*$scale, $i*$scale, $w*$scale,
+        $memtotal, $memused, $memfree, $buf, 
+        $swaptotal, $swapused, $swapfree, $cache);
+#------------------------------------------------------------------------
+    #
+    #print "\n";
+    use Term::ANSIColor qw(:pushpop);
+    print PUSHCOLOR WHITE ON_BLACK 
+        "\n  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND \n";
+    print POPCOLOR "";
+    #print color("reset");
 
     ## @process
     while($count < $row) {
-        printf("%5s %-8.9s %3s %3s %5.5s %4.4s %4.4s %1s %4.1s %4.1s %9.8s %-15s\n", 
+        printf("%5s %-8.9s %3s %3s %5.5s %4.4s %4.4s %1s %4.1f %4.1s %9.8s %-15s\n", 
                 $process[$count]->{"pid"}, $process[$count]->{"euser"},
                 $process[$count]->{"priority"}, $process[$count]->{"nice"},
                 $process[$count]->{"vsize"}, $process[$count]->{"resident"},
@@ -390,33 +509,21 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
                 $process[$count]->{"pcpu"}, $process[$count]->{"vm_size"}, # XXX 
                 $process[$count]->{"timeout"}, $process[$count]->{"cmd"}
             );
-        #printf("%5s %-8.9s %3s %3s %5.5s %4.4s %4.4s %1s %4.1s %4.1s %9.8s %-15s\n", 
-                #$proc_t->{"pid"}, $proc_t->{"euser"},
-                #$proc_t->{"priority"}, $proc_t->{"nice"},
-                #$proc_t->{"vsize"}, $proc_t->{"resident"},
-                #$proc_t->{"share"}, $proc_t->{"state"},
-                #$proc_t->{"pcpu"}, $proc_t->{"vm_size"}, # XXX 
-                #$proc_t->{"timeout"}, $proc_t->{"cmd"}
-            #);
-        ## $proc_t
         # last;
         $count++;
     }
-    
+    &readyforinterface();
+   
+    #---------- for -n or --number option-----------
+    if($numbers > 0) { $numbers--; } 
+    if(! $numbers) { exit; }
+
     $count = 0;
     select(undef, undef, undef, $delay);
 
-} while (1); 
+} while (1);
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-# function for signal action
-sub catch_int {
-	my $signame = shift;
-	print color("red"), "Stoped by SIG$signame\n", color("reset");
-	exit;
-}
-$SIG{INT} = __PACKAGE__ . "::catch_int";
-$SIG{INT} = \&catch_int; # best strategy
+# &echo();
 
 sub usage {
 	print $usage;
@@ -444,7 +551,7 @@ sub _my_program {
     return File::Basename::basename( $0 );
 }
 
-sub get_memswap_info() {
+sub get_memswap_info {
     my $meminfo = "/proc/meminfo";
     my @memarray;
 
@@ -486,6 +593,49 @@ sub get_memswap_info() {
     return @memarray;
 }
 
+sub get_cpu_info {
+    my $cpustat = "/proc/stat";
+    my @arrays;
+
+    if(!-e $cpustat) {
+        &mywarn("The file of /proc/stat is not found!");
+        return undef;
+    }
+
+    open(my $fd, "<", $cpustat);
+    if(!$fd) {
+        return undef;
+    }
+
+    while(<$fd>) {
+        if($_ =~ /cpu/) {
+                # typedef struct {
+                # /* ticks count as represented in /proc/stat */
+                # TICS_t u, n, s, i, w;
+                # /* tics count in the order of our display */
+                # TICS_t u_sav, s_sav, n_sav, i_sav, w_sav;
+                # } CPUS_t;
+            my $cpu_t = 
+             {   
+                "u" => 0,
+                "s" => 0,
+                "n" => 0,
+                "i" => 0,
+                "w" => 0
+            };
+
+            (undef, $cpu_t->{"u"}, $cpu_t->{"s"}, $cpu_t->{"n"},
+             $cpu_t->{"i"}, $cpu_t->{"w"}) = split(/\s+/, $_);
+
+            push(@arrays, $cpu_t);
+        } else {
+            last;
+        }
+    }
+    
+    close($fd);
+    return @arrays;
+}
 
 # Esc[2JEsc[1;1H    - Clear screen and move cursor to 1,1 (upper left) pos.
 #define clrscr()              puts ("\e[2J\e[1;1H")
@@ -528,4 +678,68 @@ sub showcursor {
 #sub myprint { 
 #    print {$fh} @_ 
 #}
+
+# for keyboard interface when running a program. 
+# read a char by time.
+sub readyforinterface {
+    use Term::ReadKey;
+
+    ReadMode('cbreak');
+
+    if (defined (my $char = ReadKey(-1)) ) {
+        # input was waiting and it was $char
+        &gotoxy(6,0);
+        &dokey($char);
+    } else {
+        # no input was waiting
+    }
+
+    ReadMode('normal');
+}
+
+sub dokey {
+    my $key = shift;
+
+    if($key eq 'h' or $key eq '?') {
+        &clrscr();
+        &printhelp();
+    }
+}
+
+sub printhelp {
+    print("
+Help for Interactive Commands - $script version $myversion
+Window 1:Def: Cumulative mode Off.  System: Delay 3.0 secs; Secure mode Off.
+
+  Z,B       Global: 'Z' change color mappings; 'B' disable/enable bold
+  l,t,m     Toggle Summaries: 'l' load avg; 't' task/cpu stats; 'm' mem info
+  1,I       Toggle SMP view: '1' single/separate states; 'I' Irix/Solaris mode
+
+  f,o     . Fields/Columns: 'f' add or remove; 'o' change display order
+  F or O  . Select sort field
+  <,>     . Move sort field: '<' next col left; '>' next col right
+  R,H     . Toggle: 'R' normal/reverse sort; 'H' show threads
+  c,i,S   . Toggle: 'c' cmd name/line; 'i' idle tasks; 'S' cumulative time
+  x,y     . Toggle highlights: 'x' sort field; 'y' running tasks
+  z,b     . Toggle: 'z' color/mono; 'b' bold/reverse (only if 'x' or 'y')
+  u       . Show specific user only
+  n or #  . Set maximum tasks displayed
+
+  k,r       Manipulate tasks: 'k' kill; 'r' renice
+  d or s    Set update interval
+  W         Write configuration file
+  q         Quit
+          ( commands shown with '.' require a visible task display window ) 
+Press 'h' or '?' for help with Windows,
+any other key to continue ");
+
+}
+
+sub noecho {
+    print `stty -echo`
+}
+
+sub echo {
+    print `stty sane`
+}
 
