@@ -330,8 +330,8 @@ do {
               $proc_t->{"cmin_flt"}, $proc_t->{"maj_flt"},
               $proc_t->{"cmaj_flt"}, $proc_t->{"utime"}, $proc_t->{"stime"}, $proc_t->{"cutime"},
               $proc_t->{"cstime"}, $proc_t->{"priority"}, $proc_t->{"nice"},
-              $proc_t->{"it_real_value"}, $proc_t->{"timeout"}, # not sure the value what's mean 
-              $proc_t->{"start_time"}, $proc_t->{"vsize"},
+              $proc_t->{"timeout"}, # not sure the value what's mean 
+              $proc_t->{"it_real_value"}, $proc_t->{"start_time"}, $proc_t->{"vsize"},
               $proc_t->{"rss"}, $proc_t->{"rss_rlim"}, $proc_t->{"start_code"},
               $proc_t->{"end_code"}, $proc_t->{"start_stack"}, $proc_t->{"kstk_esp"},
               $proc_t->{"kstk_eip"}, $proc_t->{"signal"}, $proc_t->{"blocked"}, 
@@ -501,10 +501,13 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
 
     ## @process
     while($count < $row) {
+        #$process[$count]->{"vsize"} = ($process[$count]->{"vsize"})/1024; 
         printf("%5s %-8.9s %3s %3s %5.5s %4.4s %4.4s %1s %4.1f %4.1s %9.8s %-15s\n", 
                 $process[$count]->{"pid"}, $process[$count]->{"euser"},
                 $process[$count]->{"priority"}, $process[$count]->{"nice"},
-                $process[$count]->{"vsize"}, $process[$count]->{"resident"},
+                #(($process[$count]->{"vsize"}/1024) . "m"), 
+                $process[$count]->{"vsize"}, 
+                $process[$count]->{"resident"},
                 $process[$count]->{"share"}, $process[$count]->{"state"},
                 $process[$count]->{"pcpu"}, $process[$count]->{"vm_size"}, # XXX 
                 $process[$count]->{"timeout"}, $process[$count]->{"cmd"}
@@ -682,19 +685,20 @@ sub showcursor {
 # for keyboard interface when running a program. 
 # read a char by time.
 sub readyforinterface {
-    use Term::ReadKey;
+    if(eval "require Term::ReadKey") {
 
-    ReadMode('cbreak');
+        ReadMode('cbreak');
 
-    if (defined (my $char = ReadKey(-1)) ) {
-        # input was waiting and it was $char
-        &gotoxy(6,0);
-        &dokey($char);
-    } else {
-        # no input was waiting
+        if (defined (my $char = ReadKey(-1)) ) {
+            # input was waiting and it was $char
+            &gotoxy(6,0);
+            &dokey($char);
+        } else {
+            # no input was waiting
+        }
+
+        ReadMode('normal');
     }
-
-    ReadMode('normal');
 }
 
 sub dokey {
