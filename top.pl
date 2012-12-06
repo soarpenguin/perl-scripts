@@ -43,7 +43,7 @@ Usage: $script [option]...
             File.
 
        -h, --help 
-              Display this help and exit
+            Display this help and exit
 
        -n : Number of iterations limit as:  -n number
             Specifies  the  maximum  number of iterations, or frames, top
@@ -53,7 +53,7 @@ Usage: $script [option]...
             Monitor only processes with an effective  UID  or  user  name
             matching that given.
 
-       -V     Display version information.
+       -V   Display version information.
 ";
 
 my $ret = GetOptions( 
@@ -429,6 +429,7 @@ do {
             $proc_t->{"suser"} = getpwuid($proc_t->{"suid"});
             $proc_t->{"egroup"} = getgrgid($proc_t->{"egid"});
             $proc_t->{"rgroup"} = getgrgid($proc_t->{"rgid"});
+            $proc_t->{"fgroup"} = getgrgid($proc_t->{"fgid"});
             ## $proc_t
         }
 
@@ -438,7 +439,7 @@ do {
 
         push @process, $proc_t;
     }
-    
+
     @process =  reverse sort { $a->{"pcpu"} <=> $b->{"pcpu"} } @process;
 
 #----------------- get infomation of cpu ---------------------------------
