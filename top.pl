@@ -134,6 +134,8 @@ $SIG{TERM} = \&catch_int; # best strategy
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 my @files;
 my $dh;
+my %savecpu;
+my $first = 0;
 
 my @cpuinfo = &get_cpu_info();
 ## @cpuinfo
@@ -349,8 +351,20 @@ do {
                 $proc_t->{"priority"} = 'RT';
             }
 
-            $proc_t->{"pcpu"} = $proc_t->{"utime"} + $proc_t->{"stime"} - $proc_t->{"tics"};
-            $proc_t->{"tics"} = $proc_t->{"utime"} + $proc_t->{"stime"};
+            if($first == 0) {
+                $proc_t->{"pcpu"} = $proc_t->{"utime"} + $proc_t->{"stime"};
+                $proc_t->{"tics"} = $proc_t->{"utime"} + $proc_t->{"stime"};
+                $savecpu{"$proc_t->{'pid'}"} = $proc_t->{'tics'};
+            } else {
+                if(exists $savecpu{"$proc_t->{'pid'}"}) {
+                    $proc_t->{"pcpu"} = $proc_t->{"utime"} + $proc_t->{"stime"} 
+                                - $savecpu{"$proc_t->{'pid'}"};
+                } else {
+                    $proc_t->{"pcpu"} = $proc_t->{"utime"} + $proc_t->{"stime"};
+                }
+                $proc_t->{"tics"} = $proc_t->{"utime"} + $proc_t->{"stime"};
+                $savecpu{"$proc_t->{'pid'}"} = $proc_t->{'tics'};
+            }
 
             if($proc_t->{"state"} eq 'S' or $proc_t->{"state"} eq 'D') {
                 $sleeping++;
@@ -440,6 +454,9 @@ do {
         push @process, $proc_t;
     }
 
+    if($first == 0) {
+        $first = 1;
+    }
     @process =  reverse sort { $a->{"pcpu"} <=> $b->{"pcpu"} } @process;
 
 #----------------- get infomation of cpu ---------------------------------
@@ -559,6 +576,7 @@ sub _my_program {
     return File::Basename::basename( $0 );
 }
 
+# get swap memory infomation.
 sub get_memswap_info {
     my $meminfo = "/proc/meminfo";
     my @memarray;
@@ -601,6 +619,7 @@ sub get_memswap_info {
     return @memarray;
 }
 
+# get cpu infomation from /proc/stat.
 sub get_cpu_info {
     my $cpustat = "/proc/stat";
     my @arrays;
@@ -729,7 +748,7 @@ sub showcursor {
 # read a char by time.
 sub readyforinterface {
     if(eval "require Term::ReadKey") {
-
+        use Term::ReadKey;
         ReadMode('cbreak');
 
         if (defined (my $char = ReadKey(-1)) ) {
