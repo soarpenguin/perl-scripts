@@ -112,7 +112,7 @@ if($col < 80) {
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # function for signal action
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 sub catch_int {
 	my $signame = shift;
     &gotoxy($row+8, 0);
@@ -183,7 +183,7 @@ do {
     } else {
         ($uptime, undef) = split(/\s+/, <$fd>);
         close($fd);
-        $uptime = strftime "%H:%M", localtime($uptime)
+        $uptime = &fmttime($uptime); 
     }
     # if( !$fd) {
     #     ($min, $hour, $day) = (0, 0, 0);
@@ -467,10 +467,14 @@ do {
     my $total = $u + $s + $n + $i + $w;
     if($total < 1) { $total = 1; }
     my $scale = 100.0 / $total;
+    
+    # get login user infomation
+    my @usernum = &getusers;
+    ## @usernum
 
 #----------------- the head infomation of display.------------------------
-    printf("%5s - %8s up  %3s,  3 users,  load average: %3s, %3s, %3s\n", 
-        $script, $now, $uptime, $sysload1, $sysload5, $sysload15);
+    printf("%5s - %8s up %5s, %2d users,  load average: %3s, %3s, %3s\n", 
+        $script, $now, $uptime, $#usernum+1, $sysload1, $sysload5, $sysload15);
     ## $uptime
     # if($day > 0) {
     #     printf("%5s - %8s up %3s days, %2s:%2s,  3 users,  load average: %3s, %3s, %3s\n", 
@@ -639,6 +643,44 @@ sub get_cpu_info {
     
     close($fd);
     return @arrays;
+}
+
+# convert seconds to day, hour, minuter.
+sub fmttime {
+    my $seconds = shift;
+
+    unless($seconds) { return ""; }
+    my ($days, $hour, $min);
+    my $tmpstring = "";
+
+    $days = int ($seconds / (24 * 60 * 60));
+    $hour = ($seconds / (60 * 60) % 24);
+    $min = ($seconds / 60 % 60);
+
+    if($days > 1) {
+        $tmpstring = "$days days ";
+    } elsif ($days > 0) {
+        $tmpstring = "$days day ";
+    }
+
+    $tmpstring .= sprintf("%2d:%2d", $hour, $min);
+}
+
+# get the number of user login. need User::Utmp. 
+# http://search.cpan.org/~mpiotr/User-Utmp-1.8/Utmp.pm
+sub getusers {
+    use User::Utmp qw(:constants :utmpx);
+    my @utmp = getutx();
+    endutxent();
+    my @a;
+    ## @utmp
+    foreach my $utent (@utmp) {
+        # if($utent->{'ut_user'})
+        if($utent->{'ut_type'} == USER_PROCESS) {
+          push @a, $utent->{'ut_user'};  
+        }
+    }
+    return @a;
 }
 
 # Esc[2JEsc[1;1H    - Clear screen and move cursor to 1,1 (upper left) pos.
