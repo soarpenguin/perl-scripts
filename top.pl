@@ -153,7 +153,7 @@ my %cpuhash = (
 ## %cpuhash
 
 &clrscr();
-&hidecursor();
+#&hidecursor();
 # &noecho();
 do {
     
@@ -524,6 +524,7 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
     ## @process
     while($count < $row) {
         #$process[$count]->{"vsize"} = ($process[$count]->{"vsize"})/1024; 
+        &clreol();
         printf("%5s %-8.9s %3s %3s %5.5s %4.4s %4.4s %1s %4.1f %4.1s %9.8s %-15s\n", 
                 $process[$count]->{"pid"}, $process[$count]->{"euser"},
                 $process[$count]->{"priority"}, $process[$count]->{"nice"},
@@ -688,18 +689,20 @@ sub fmttime {
 # get the number of user login. need User::Utmp. 
 # http://search.cpan.org/~mpiotr/User-Utmp-1.8/Utmp.pm
 sub getusers {
-    use User::Utmp qw(:constants :utmpx);
-    my @utmp = getutx();
-    endutxent();
-    my @a;
-    ## @utmp
-    foreach my $utent (@utmp) {
-        # if($utent->{'ut_user'})
-        if($utent->{'ut_type'} == USER_PROCESS) {
-          push @a, $utent->{'ut_user'};  
+    if(eval "require User::Utmp") {
+        use User::Utmp qw(:constants :utmpx);
+        my @utmp = getutx();
+        endutxent();
+        my @a;
+        ## @utmp
+        foreach my $utent (@utmp) {
+            # if($utent->{'ut_user'})
+            if($utent->{'ut_type'} == USER_PROCESS) {
+                push @a, $utent->{'ut_user'};  
+            }
         }
+        return @a;
     }
-    return @a;
 }
 
 # Esc[2JEsc[1;1H    - Clear screen and move cursor to 1,1 (upper left) pos.
@@ -710,7 +713,7 @@ sub clrscr {
 
 # Esc[K     - Erases from the current cursor position to the end of the current line.
 #define clreol()              puts ("\e[K")
-sub clreof {
+sub clreol {
     print "\e[K";
 }
 
