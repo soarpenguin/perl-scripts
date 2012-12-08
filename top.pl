@@ -1,7 +1,10 @@
 #!/usr/bin/perl
 #
 
-# top.pl -- ***********. {{{1
+# top.pl -- top command implemented use perl. {{{1
+#   get infomation from /proc system.
+#   the main file for system info is:
+#    /proc/stat /proc/<pid>/status /proc/<pid>/statm etc.
 #
 # Author:  soarpenguin <soarpenguin@gmail.com>
 #          First release Nov.27 2012
@@ -104,7 +107,7 @@ close($tty_fh);
 #my ($col, $row, $xpixel, $ypixel) = unpack('S4', $winsize);
 ($row, $col) = unpack('S4', $winsize);
 if($col < 80) {
-	print color("red"), "Need >= 80 column screen.\n", color("reset");
+    print color("red"), "Need >= 80 column screen.\n", color("reset");
     exit;
 } else {
     $row -= 8;
@@ -114,12 +117,12 @@ if($col < 80) {
 # function for signal action
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 sub catch_int {
-	my $signame = shift;
+    my $signame = shift;
     &gotoxy($row+8, 0);
-	print color("red"), "Stoped by SIG$signame\n", color("reset");
+    print color("red"), "Stoped by SIG$signame\n", color("reset");
     &showcursor();
     # &echo();
-	exit;
+    exit;
 }
 BEGIN {
     $SIG{INT} = __PACKAGE__ . "::catch_int";
@@ -545,13 +548,13 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
 # &echo();
 
 sub usage {
-	print $usage;
-	exit;
+    print $usage;
+    exit;
 }
 
 sub version {
-	print "$script version $myversion\n";
-	exit;
+    print "$script version $myversion\n";
+    exit;
 }
 
 sub mywarn {
