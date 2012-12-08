@@ -121,13 +121,14 @@ sub catch_int {
     # &echo();
 	exit;
 }
-$SIG{INT} = __PACKAGE__ . "::catch_int";
-$SIG{INT} = \&catch_int; # best strategy
-$SIG{QUIT} = __PACKAGE__ . "::catch_int";
-$SIG{QUIT} = \&catch_int;
-$SIG{TERM} = __PACKAGE__ . "::catch_int";
-$SIG{TERM} = \&catch_int; # best strategy
-
+BEGIN {
+    $SIG{INT} = __PACKAGE__ . "::catch_int";
+    $SIG{INT} = \&catch_int; # best strategy
+    $SIG{QUIT} = __PACKAGE__ . "::catch_int";
+    $SIG{QUIT} = \&catch_int;
+    $SIG{TERM} = __PACKAGE__ . "::catch_int";
+    $SIG{TERM} = \&catch_int; # best strategy
+}
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #               the main function is start                      +
@@ -157,6 +158,7 @@ my %cpuhash = (
 # &noecho();
 do {
     
+START:
     ($sleeping, $running, $zombie, $stoped) = (0, 0, 0, 0);
     @files = ();
     if(! opendir $dh, $proc) {
@@ -178,15 +180,8 @@ do {
     #my ($min, $hour, $day, $fd);
     my $uptime;
     my $fd;
-    #open($fd, "<", File::Spec->catfile($proc, "uptime"));
-    open($fd, "<",  "$proc/uptime"); 
-    if ( !$fd ) {
-        $uptime = 0;
-    } else {
-        ($uptime, undef) = split(/\s+/, <$fd>);
-        close($fd);
-        $uptime = &fmttime($uptime); 
-    }
+
+    $uptime = &fmttime(&get_uptime()); 
     # if( !$fd) {
     #     ($min, $hour, $day) = (0, 0, 0);
     # } else {
@@ -247,7 +242,7 @@ do {
                 "it_real_value" => "", # ? */
                 # the next 7 members come from /proc/#/statm */
                 "size" => "", # total # of pages of memory */
-                "resident" => "", # number of resident set (non-swapped) pages (4k) */
+                "resident" => "0", # number of resident set (non-swapped) pages (4k) */
                 "share" => "", # number of pages of shared (mmap'd) memory */
                 "trs" => "0", # text resident set size */
                 "lrs" => "0", # shared-lib resident set size */
@@ -456,8 +451,11 @@ do {
 
     if($first == 0) {
         $first = 1;
+        goto START;
     }
-    @process =  reverse sort { $a->{"pcpu"} <=> $b->{"pcpu"} } @process;
+    # sort the @process array across multiple columns. (1:pcpu, 2:pid)
+    @process =  reverse sort { $a->{"pcpu"} <=> $b->{"pcpu"} || 
+            $b->{"pid"} <=> $a->{"pid"} } @process;
 
 #----------------- get infomation of cpu ---------------------------------
     $#cpuinfo=-1;
@@ -490,25 +488,17 @@ do {
     ## @usernum
 
 #----------------- the head infomation of display.------------------------
+    &clreol();
     printf("%5s - %8s up %5s, %2d users,  load average: %3s, %3s, %3s\n", 
         $script, $now, $uptime, $#usernum+1, $sysload1, $sysload5, $sysload15);
     ## $uptime
-    # if($day > 0) {
-    #     printf("%5s - %8s up %3s days, %2s:%2s,  3 users,  load average: %3s, %3s, %3s\n", 
-    #         $script, $now, $day, $hour, $min, $sysload1, $sysload5, $sysload15);
-    # } else {
-    #     printf("%5s - %8s up  %2s:%2s,  3 users,  load average: %3s, %3s, %3s\n", 
-    #         $script, $now, $hour, $min, $sysload1, $sysload5, $sysload15);
-    # }
-#       print("Tasks: $num total,   2 running, 163 sleeping,   0 stopped,   1 zombie
-#   Cpu(s):  0.7%us,  0.6%sy,  0.1%ni, 98.3%id,  0.3%wa,  0.0%hi,  0.0%si,  0.0%st
-#   Mem:   ${memtotal}k total,   ${memused}k used,   ${memfree}k free,    ${buf}k buffers
-#   Swap:  ${swaptotal}k total,   ${swapused}k used,  ${swapfree}k free,   ${cache}k cached\n");
-    printf("Tasks: %3d total,   %2d running, %3d sleeping, %3d stopped, %2d zombie
-Cpu(s):  %3.1f%%us, %3.1f%%sy, %3.1f%%ni, %3.1f%%id, %3.1f%%wa, 0.0%%hi, 0.0%%si, 0.0%%st
+    &clreol();
+    printf("Tasks: %3d total,   %2d running, %3d sleeping, %3d stopped, %2d zombie\n",
+        $num, $running, $sleeping, $stoped, $zombie);
+    &clreol();
+printf("Cpu(s):  %2.1f%%us, %2.1f%%sy, %2.1f%%ni, %2.1f%%id, %2.1f%%wa, 0.0%%hi, 0.0%%si, 0.0%%st
 Mem:  %8dk total, %8dk used, %8dk free, %8dk buffers
 Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
-        $num, $running, $sleeping, $stoped, $zombie, 
         $u*$scale, $s*$scale, $n*$scale, $i*$scale, $w*$scale,
         $memtotal, $memused, $memfree, $buf, 
         $swaptotal, $swapused, $swapfree, $cache);
@@ -525,15 +515,18 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
     while($count < $row) {
         #$process[$count]->{"vsize"} = ($process[$count]->{"vsize"})/1024; 
         &clreol();
-        printf("%5s %-8.9s %3s %3s %5.5s %4.4s %4.4s %1s %4.1f %4.1s %9.8s %-15s\n", 
+        printf("%5s %-8s %3s %3s %5.5s %4.4s %4.4s %1s %4d %4.1s %9s %-15s\n", 
                 $process[$count]->{"pid"}, $process[$count]->{"euser"},
                 $process[$count]->{"priority"}, $process[$count]->{"nice"},
                 #(($process[$count]->{"vsize"}/1024) . "m"), 
                 $process[$count]->{"vsize"}, 
                 $process[$count]->{"resident"},
                 $process[$count]->{"share"}, $process[$count]->{"state"},
-                $process[$count]->{"pcpu"}, $process[$count]->{"vm_size"}, # XXX 
-                $process[$count]->{"timeout"}, $process[$count]->{"cmd"}
+                int($process[$count]->{"pcpu"}), 
+                $process[$count]->{"vm_size"}, # XXX 
+                #&fmtMemPercent($process[$count]->{"resident"}, $memtotal),
+                &scale_tics($process[$count]->{"utime"}+$process[$count]->{"stime"}, 8), 
+                $process[$count]->{"cmd"}
             );
         # last;
         $count++;
@@ -665,6 +658,22 @@ sub get_cpu_info {
     return @arrays;
 }
 
+# get uptime infomation from /proc/uptime
+sub get_uptime {
+    my $fd;
+    my $uptime;
+    #open($fd, "<", File::Spec->catfile($proc, "uptime"));
+    open($fd, "<",  "$proc/uptime"); 
+    if ( !$fd ) {
+        $uptime = 0;
+    } else {
+        ($uptime, undef) = split(/\s+/, <$fd>);
+        close($fd);
+    }
+
+    return $uptime;
+}
+
 # convert seconds to day, hour, minuter.
 sub fmttime {
     my $seconds = shift;
@@ -683,7 +692,44 @@ sub fmttime {
         $tmpstring = "$days day ";
     }
 
-    $tmpstring .= sprintf("%2d:%2d", $hour, $min);
+    if($hour > 0) {
+        $tmpstring .= sprintf("%02d:%02d", $hour, $min);
+    } else {
+        $tmpstring .= sprintf("%2d min", $min);
+    }
+}
+
+# format 'tics' to fir 'width'
+sub scale_tics {
+    my ($tics, $width) = @_;
+    # XXX fixme get system Hertz runtime
+    our $Hertz = 100;
+    my ($ss, $ct, $nt);
+
+    $ct = (($tics * 100) / $Hertz) % 100;
+    $nt = $tics / $Hertz;
+    if($width >= 7) {
+        return sprintf("%d:%02d.%02d", int($nt/60), int($nt%60), $ct);
+    } elsif($width >= 4) {
+        $ss = $nt % 60;
+        $nt /= 60;
+        return sprintf("%d:%02d", int($nt), $ss);
+    } else {
+        return '?';
+    }
+}
+
+# convert $proc_t->{"resident"} to memory percentage info.
+sub fmtMemPercent {
+    my $tmp = shift;
+    my $memtotal = shift;
+    # XXX fixme get the pagesize runtime 
+    my $pagesize = 4 << 10; 
+
+    if(! $tmp or ! $memtotal) {
+        return "0";
+    }
+    $tmp = ((($tmp * $pagesize) >> 10 * 100) / $memtotal);
 }
 
 # get the number of user login. need User::Utmp. 
