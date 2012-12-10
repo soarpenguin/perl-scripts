@@ -524,8 +524,9 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
                 #(($process[$count]->{"vsize"}/1024) . "m"), 
                 $process[$count]->{"vsize"}, 
                 $process[$count]->{"resident"},
-                $process[$count]->{"share"}, $process[$count]->{"state"},
-                int($process[$count]->{"pcpu"}), 
+                &fmtShare($process[$count]->{"share"}), 
+                $process[$count]->{"state"},
+                int($process[$count]->{"pcpu"}) / 3, 
                 $process[$count]->{"vm_size"}, # XXX 
                 #&fmtMemPercent($process[$count]->{"resident"}, $memtotal),
                 &scale_tics($process[$count]->{"utime"}+$process[$count]->{"stime"}, 8), 
@@ -699,6 +700,23 @@ sub fmttime {
         $tmpstring .= sprintf("%02d:%02d", $hour, $min);
     } else {
         $tmpstring .= sprintf("%2d min", $min);
+    }
+}
+
+# format share size.
+sub fmtShare {
+    my $share = shift;
+
+    $share *= 4;
+
+    if($share <= 9999) {
+        return sprintf("%d", $share);
+    } elsif($share <= 1024 * 1024) {
+        return sprintf("%dm", $share / 1024);
+    } elsif($share <= 1024 * 1024 * 1024) {
+        return sprintf("%dg", $share / 1024 / 1024);
+    } else {
+        return '?';
     }
 }
 
