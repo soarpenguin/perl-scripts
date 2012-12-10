@@ -210,8 +210,8 @@ START:
     
     foreach my $file (@files) {
         my $proc_t = 
-            {   "pid" => "", # process id 
-                "ppid" => "", # pid of parent process */
+            {   "pid" => "0", # process id 
+                "ppid" => "0", # pid of parent process */
                 
                 "pcpu" => "0", # %CPU usage (is not filled in by readproc!!!) */
                 "state" => "", # single-char code for process state (S=sleeping) */
@@ -225,10 +225,10 @@ START:
                 ## ifdef SIGNAL_STRING
                 # char
                 # Linux 2.1.7x and up have 64 signals. Allow 64, plus '\0' and padding. */
-                "signal" => "", #[18]  mask of pending signals */
-                "blocked" => "", #[18]  mask of blocked signals */
-                "sigignore" => "", #[18]  mask of ignored signals */
-                "sigcatch" => "", #[18]  mask of caught signals */
+                "signal" => "0", #[18]  mask of pending signals */
+                "blocked" => "0", #[18]  mask of blocked signals */
+                "sigignore" => "0", #[18]  mask of ignored signals */
+                "sigcatch" => "0", #[18]  mask of caught signals */
                 ##else
                 # long long
                 # Linux 2.1.7x and up have 64 signals. */
@@ -238,44 +238,44 @@ START:
                 # sigcatch; # mask of caught signals */
                 ##endif
                 #long
-                "priority" => "", # kernel scheduling priority */
-                "timeout" => "", # ? */
-                "nice" => "", # standard unix nice level of process */
-                "rss" => "", # resident set size from /proc/#/stat (pages) */
-                "it_real_value" => "", # ? */
+                "priority" => "0", # kernel scheduling priority */
+                "timeout" => "0", # ? */
+                "nice" => "0", # standard unix nice level of process */
+                "rss" => "0", # resident set size from /proc/#/stat (pages) */
+                "it_real_value" => "0", # ? */
                 # the next 7 members come from /proc/#/statm */
-                "size" => "", # total # of pages of memory */
+                "size" => "0", # total # of pages of memory */
                 "resident" => "0", # number of resident set (non-swapped) pages (4k) */
-                "share" => "", # number of pages of shared (mmap'd) memory */
+                "share" => "0", # number of pages of shared (mmap'd) memory */
                 "trs" => "0", # text resident set size */
                 "lrs" => "0", # shared-lib resident set size */
                 "drs" => "0", # data resident set size */
                 "dt" => "0", # dirty pages */
                 #unsigned long
                 "vm_size" => 0, # same as vsize in kb */
-                "vm_lock" => "", # locked pages in kb */
+                "vm_lock" => "0", # locked pages in kb */
                 "vm_rss" => 0, # same as rss in kb */
                 "vm_data" => 0, # data size */
                 "vm_stack" => 0, # stack size */
                 "vm_exe" => 0, # executable size */
                 "vm_lib" => 0, # library size (all pages, not just used ones) */
-                "rtprio" => "", # real-time priority */
-                "sched" => "", # scheduling class */
+                "rtprio" => "0", # real-time priority */
+                "sched" => "0", # scheduling class */
                 "vsize" => 0, # number of pages of virtual memory ... */
-                "rss_rlim" => "", # resident set size limit? */
-                "flags" => "", # kernel flags for the process */
-                "min_flt" => "", # number of minor page faults since process start */
-                "maj_flt" => "", # number of major page faults since process start */
-                "cmin_flt" => "", # cumulative min_flt of process and child processes */
-                "cmaj_flt" => "", # cumulative maj_flt of process and child processes */
-                "nswap" => "", # ? */
-                "cnswap" => "", # cumulative nswap ? */
-                "start_code" => "", # address of beginning of code segment */
-                "end_code" => "", # address of end of code segment */
-                "start_stack" => "", # address of the bottom of stack for the process */
-                "kstk_esp" => "", # kernel stack pointer */
-                "kstk_eip" => "", # kernel instruction pointer */
-                "wchan" => "", # address of kernel wait channel proc is sleeping in */
+                "rss_rlim" => "0", # resident set size limit? */
+                "flags" => "0", # kernel flags for the process */
+                "min_flt" => "0", # number of minor page faults since process start */
+                "maj_flt" => "0", # number of major page faults since process start */
+                "cmin_flt" => "0", # cumulative min_flt of process and child processes */
+                "cmaj_flt" => "0", # cumulative maj_flt of process and child processes */
+                "nswap" => "0", # ? */
+                "cnswap" => "0", # cumulative nswap ? */
+                "start_code" => "0", # address of beginning of code segment */
+                "end_code" => "0", # address of end of code segment */
+                "start_stack" => "0", # address of the bottom of stack for the process */
+                "kstk_esp" => "0", # kernel stack pointer */
+                "kstk_eip" => "0", # kernel instruction pointer */
+                "wchan" => "0", # address of kernel wait channel proc is sleeping in */
                 #char
                 "environ" => "", # environment string vector (/proc/#/environ) */
                 "cmdline" => "", # command line string vector (/proc/#/cmdline) */
@@ -291,22 +291,22 @@ START:
                 "fgroup" => "", # [16], # filesystem group name */
                 "cmd" => "", # [16]; # basename of executable file in call to exec(2) */
                 #int
-                "ruid" => "", 
-                "rgid" => "", # real */
-                "euid" => "", 
-                "egid" => "", # effective */
-                "suid" => "", 
-                "sgid" => "", # saved */
-                "fuid" => "", 
-                "fgid" => "", # fs (used for file access only) */
-                "pgrp" => "", # process group id */
-                "session" => "", # session id */
-                "tty" => "", # full device number of controlling terminal */
-                "tpgid" => "", # terminal process group id */
-                "exit_signal" => "", # might not be SIGCHLD */
-                "processor" => "", # current (or most recent?) CPU */
+                "ruid" => "0", 
+                "rgid" => "0", # real */
+                "euid" => "0", 
+                "egid" => "0", # effective */
+                "suid" => "0", 
+                "sgid" => "0", # saved */
+                "fuid" => "0", 
+                "fgid" => "0", # fs (used for file access only) */
+                "pgrp" => "0", # process group id */
+                "session" => "0", # session id */
+                "tty" => "0", # full device number of controlling terminal */
+                "tpgid" => "0", # terminal process group id */
+                "exit_signal" => "0", # might not be SIGCHLD */
+                "processor" => "0", # current (or most recent?) CPU */
                 ##ifdef FLASK_LINUX
-                "sid" => ""
+                "sid" => "0"
                 ##endif
             };
         #$proc_t -> {"pid"} = $file;
@@ -478,10 +478,10 @@ START:
         "w" => $cpuinfo[0]->{"w"}
     );
     if($u < 0) { $u = 0; }
-    if($s < 0) { $u = 0; }
-    if($n < 0) { $u = 0; }
-    if($i < 0) { $u = 0; }
-    if($w < 0) { $u = 0; }
+    if($s < 0) { $s = 0; }
+    if($n < 0) { $n = 0; }
+    if($i < 0) { $i = 0; }
+    if($w < 0) { $w = 0; }
     my $total = $u + $s + $n + $i + $w;
     if($total < 1) { $total = 1; }
     my $scale = 100.0 / $total;
