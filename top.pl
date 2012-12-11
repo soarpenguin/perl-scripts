@@ -29,6 +29,7 @@ my $proc = '/proc';
 my $myversion = '0.1.0';
 my $script = &_my_program();
 my $pagesize = &getpagesize();
+my $Hertz = &hertz_hack();
 
 my $usage = "
 Usage: $script [option]...
@@ -463,7 +464,7 @@ START:
 
 #----------------- get infomation of cpu ---------------------------------
     $#cpuinfo=-1;
-    @cpuinfo = get_cpu_info();
+    @cpuinfo = &get_cpu_info();
     my ($u, $n, $s, $i, $w) = (
         $cpuinfo[0]->{"u"} - $cpuhash{"u"},
         $cpuinfo[0]->{"s"} - $cpuhash{"s"},
@@ -528,7 +529,7 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
                 $process[$count]->{"state"},
                 int($process[$count]->{"pcpu"}) / 3, 
                 &fmtMemPercent($process[$count]->{"resident"}, $memtotal, $pagesize),
-                &scale_tics($process[$count]->{"utime"}+$process[$count]->{"stime"}, 8), 
+                &scale_tics($process[$count]->{"utime"}+$process[$count]->{"stime"}, 8, $Hertz), 
                 $process[$count]->{"cmd"}
             );
         # last;
@@ -751,9 +752,7 @@ sub fmtShare {
 
 # format 'tics' to fit 'width'
 sub scale_tics {
-    my ($tics, $width) = @_;
-    # XXX fixme get system Hertz runtime
-    our $Hertz = 100;
+    my ($tics, $width, $Hertz) = @_;
     my ($ss, $ct, $nt);
 
     $ct = (($tics * 100) / $Hertz) % 100;
@@ -767,6 +766,51 @@ sub scale_tics {
     } else {
         return '?';
     }
+}
+
+# get system HZ value.
+sub hertz_hack {
+    my ($up_1, $up_2);
+    my @tmpcpu;
+    my ($Hertz, $jiffies, $h, $cpunum);
+    my ($u, $n, $s, $i, $w) = (0, 0, 0, 0, 0);
+
+    do {
+        $up_1 = &get_uptime();
+        $#tmpcpu=-1;
+        @tmpcpu = &get_cpu_info();
+        $cpunum = $#tmpcpu;
+        ($u, $n, $s, $i, $w) = (
+            $tmpcpu[0]->{"u"}, $tmpcpu[0]->{"s"},
+            $tmpcpu[0]->{"n"}, $tmpcpu[0]->{"i"},
+            $tmpcpu[0]->{"w"} 
+        );
+        $up_2 = &get_uptime();
+    } while(int(($up_2 - $up_1) * 1000.0 / $up_1));
+
+    $jiffies = $u + $n + $s + $i;
+    ## $jiffies;
+    ## $cpunum
+    $h = int($jiffies / (($up_1 + $up_2) / 2) / $cpunum);
+
+    if($h >= 9 and $h <= 11) { $Hertz = 10; } 
+    elsif($h >=   18 and $h <=   22) { $Hertz = 20; }
+    elsif($h >=   30 and $h <=   34) { $Hertz = 32; }
+    elsif($h >=   48 and $h <=   52) { $Hertz = 50; }
+    elsif($h >=   58 and $h <=   61) { $Hertz = 60; }
+    elsif($h >=   62 and $h <=   65) { $Hertz = 64; }
+    elsif($h >=   95 and $h <=  105) { $Hertz = 100; }
+    elsif($h >=  124 and $h <=  132) { $Hertz = 128; }
+    elsif($h >=  195 and $h <=  204) { $Hertz = 200; }
+    elsif($h >=  253 and $h <=  260) { $Hertz = 256; }
+    elsif($h >=  393 and $h <=  408) { $Hertz = 400; }
+    elsif($h >=  790 and $h <=  808) { $Hertz = 800; }
+    elsif($h >=  990 and $h <= 1010) { $Hertz = 1000; }
+    elsif($h >= 1015 and $h <= 1035) { $Hertz = 1024; }
+    elsif($h >= 1180 and $h <= 1200) { $Hertz = 1200; }
+    else { $Hertz = 100; }
+
+    return $Hertz;
 }
 
 # format number to fit 'width'
