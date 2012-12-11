@@ -510,7 +510,7 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
     #print "\n";
     use Term::ANSIColor qw(:pushpop);
     print PUSHCOLOR WHITE ON_BLACK 
-        "\n  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND \n";
+        "\n  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND    \n";
     print POPCOLOR "";
     #print color("reset");
 
@@ -518,17 +518,16 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
     while($count < $row) {
         #$process[$count]->{"vsize"} = ($process[$count]->{"vsize"})/1024; 
         &clreol();
-        printf("%5s %-8s %3s %3s %5.5s %4.4s %4.4s %1s %4d %4.1s %9s %-15s\n", 
+        printf("%5s %-8s %3s %3s %5s %4s %4s %1s %4d %4.1f %9s %-15s\n", 
                 $process[$count]->{"pid"}, $process[$count]->{"euser"},
                 $process[$count]->{"priority"}, $process[$count]->{"nice"},
-                #(($process[$count]->{"vsize"}/1024) . "m"), 
-                $process[$count]->{"vsize"}, 
-                $process[$count]->{"resident"},
+                &scale_num($process[$count]->{"size"}, 5), 
+                &scale_num($process[$count]->{"resident"}, 4),
                 &fmtShare($process[$count]->{"share"}), 
                 $process[$count]->{"state"},
                 int($process[$count]->{"pcpu"}) / 3, 
-                $process[$count]->{"vm_size"}, # XXX 
-                #&fmtMemPercent($process[$count]->{"resident"}, $memtotal),
+                #$process[$count]->{"vm_size"}, # XXX 
+                &fmtMemPercent($process[$count]->{"resident"}, $memtotal),
                 &scale_tics($process[$count]->{"utime"}+$process[$count]->{"stime"}, 8), 
                 $process[$count]->{"cmd"}
             );
@@ -662,6 +661,36 @@ sub get_cpu_info {
     return @arrays;
 }
 
+# get the system pagesize from 
+sub getpagesize {
+    my $file = '/proc/self/smaps';
+    my ($num, $unit);
+    my $fd;
+    $num = 4096;
+
+    if(! -e $file) {
+        Core::warn("The $file is not exist. The pagesize default is 4kB\n");
+        return $num;
+    } else {
+        open($fd, "<", $file);
+        while(<$fd>) {
+            if($_ =~ /KernelPageSize/i or $_ =~ /MMUPageSize/i) {
+                (undef, $num, $unit) = split(/\s+/, $_);
+                if($unit =~ /kb/i) {
+                    $num <<= 10;
+                } elsif ($unit =~ /mb/i) {
+                    $num <<= 20;
+                } elsif ($unit =~ /gb/i) {
+                    $num <<= 30;
+                } 
+                last;
+            }
+        }
+        close($fd);
+        return $num;
+    }
+}
+
 # get uptime infomation from /proc/uptime
 sub get_uptime {
     my $fd;
@@ -707,7 +736,7 @@ sub fmttime {
 sub fmtShare {
     my $share = shift;
 
-    $share *= 4;
+    $share *= (&getpagesize() >> 10);
 
     if($share <= 9999) {
         return sprintf("%d", $share);
@@ -720,7 +749,7 @@ sub fmtShare {
     }
 }
 
-# format 'tics' to fir 'width'
+# format 'tics' to fit 'width'
 sub scale_tics {
     my ($tics, $width) = @_;
     # XXX fixme get system Hertz runtime
@@ -740,17 +769,35 @@ sub scale_tics {
     }
 }
 
+# format number to fit 'width'
+sub scale_num {
+    my ($num, $width) = @_;
+    $num = $num * &getpagesize() >> 10;
+
+    if($num <= (10 ** $width - 1)) {
+        return sprintf("%d", $num);
+    } elsif($num <= 1024 * 1024) {
+        return sprintf("%dm", $num / 1024);
+    } elsif($num <= 1024 * 1024 * 1024) {
+        return sprintf("%dg", $num / 1024 / 1024);
+    } else {
+        return '?';
+    }
+}
+
 # convert $proc_t->{"resident"} to memory percentage info.
 sub fmtMemPercent {
     my $tmp = shift;
     my $memtotal = shift;
-    # XXX fixme get the pagesize runtime 
-    my $pagesize = 4 << 10; 
-
+    ## $memtotal
+    my $pagesize = &getpagesize(); 
+    ## $pagesize;
     if(! $tmp or ! $memtotal) {
         return "0";
     }
-    $tmp = ((($tmp * $pagesize) >> 10 * 100) / $memtotal);
+    $tmp = sprintf("%.1f", ((($tmp * $pagesize) / 1024 * 100) / $memtotal));
+    
+    return $tmp;
 }
 
 # get the number of user login. need User::Utmp. 
@@ -793,8 +840,7 @@ sub delline {
 # Esc[Line;ColumnH    - Moves the cursor to the specified position (coordinates)
 #define gotoxy(x,y)           printf("\e[%d;%dH", y, x)
 sub gotoxy {
-    my $x = shift;
-    my $y = shift;
+    my ($x, $y) = @_;
 
     printf("\e[%d;%dH", $x, $y);
 }
