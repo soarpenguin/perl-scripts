@@ -28,6 +28,7 @@ my ($sleeping, $running, $zombie, $stoped);
 my $proc = '/proc';
 my $myversion = '0.1.0';
 my $script = &_my_program();
+my $pagesize = &getpagesize();
 
 my $usage = "
 Usage: $script [option]...
@@ -521,13 +522,12 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
         printf("%5s %-8s %3s %3s %5s %4s %4s %1s %4d %4.1f %9s %-15s\n", 
                 $process[$count]->{"pid"}, $process[$count]->{"euser"},
                 $process[$count]->{"priority"}, $process[$count]->{"nice"},
-                &scale_num($process[$count]->{"size"}, 5), 
-                &scale_num($process[$count]->{"resident"}, 4),
-                &fmtShare($process[$count]->{"share"}), 
+                &scale_num($process[$count]->{"size"}, 5, $pagesize), 
+                &scale_num($process[$count]->{"resident"}, 4, $pagesize),
+                &fmtShare($process[$count]->{"share"}, $pagesize), 
                 $process[$count]->{"state"},
                 int($process[$count]->{"pcpu"}) / 3, 
-                #$process[$count]->{"vm_size"}, # XXX 
-                &fmtMemPercent($process[$count]->{"resident"}, $memtotal),
+                &fmtMemPercent($process[$count]->{"resident"}, $memtotal, $pagesize),
                 &scale_tics($process[$count]->{"utime"}+$process[$count]->{"stime"}, 8), 
                 $process[$count]->{"cmd"}
             );
@@ -734,9 +734,9 @@ sub fmttime {
 
 # format share size.
 sub fmtShare {
-    my $share = shift;
+    my ($share, $pagesize) = @_;
 
-    $share *= (&getpagesize() >> 10);
+    $share *= ($pagesize >> 10);
 
     if($share <= 9999) {
         return sprintf("%d", $share);
@@ -771,8 +771,8 @@ sub scale_tics {
 
 # format number to fit 'width'
 sub scale_num {
-    my ($num, $width) = @_;
-    $num = $num * &getpagesize() >> 10;
+    my ($num, $width, $pagesize) = @_;
+    $num = $num * $pagesize >> 10;
 
     if($num <= (10 ** $width - 1)) {
         return sprintf("%d", $num);
@@ -787,10 +787,8 @@ sub scale_num {
 
 # convert $proc_t->{"resident"} to memory percentage info.
 sub fmtMemPercent {
-    my $tmp = shift;
-    my $memtotal = shift;
+    my ($tmp, $memtotal, $pagesize) = @_;
     ## $memtotal
-    my $pagesize = &getpagesize(); 
     ## $pagesize;
     if(! $tmp or ! $memtotal) {
         return "0";
