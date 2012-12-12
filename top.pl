@@ -79,7 +79,7 @@ if(! $ret) {
 # detect the /proc mounted. the system info from it.
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 if(! -e $proc) {
-    &mydie("The /proc filesyestem is not mounted, try \$mount /proc");
+    &mydie("The /proc filesyestem is not mounted, try \$mount /proc.");
 }
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -98,11 +98,11 @@ my $col = 80;
 my $row = 24;
 
 require 'sys/ioctl.ph';
-CORE::die "no TIOCGWINSZ " unless defined &TIOCGWINSZ;
-open(my $tty_fh, "+</dev/tty") or CORE::die "No tty: $!";
+CORE::die "no TIOCGWINSZ \n" unless defined &TIOCGWINSZ;
+open(my $tty_fh, "+</dev/tty") or CORE::die "No tty: $!\n";
 my $winsize;
 unless (ioctl($tty_fh, &TIOCGWINSZ, $winsize='')) {
-    CORE::die sprintf "$0: ioctl TIOCGWINSZ (%08x: $!)\n", &TIOCGWINSZ;
+    CORE::die sprintf "$script: ioctl TIOCGWINSZ (%08x: $!)\n", &TIOCGWINSZ;
 }
 close($tty_fh);
 
@@ -167,7 +167,7 @@ START:
     ($sleeping, $running, $zombie, $stoped) = (0, 0, 0, 0);
     @files = ();
     if(! opendir $dh, $proc) {
-        &mydie("Open the $proc failed");
+        &mydie("Open the $proc failed!");
     }
     @files = readdir($dh);
     closedir($dh);
@@ -564,8 +564,9 @@ sub mywarn {
 
 sub mydie {
     #return CORE::die( _my_program(), ': ', @_, "\n" );
-    print (color("red"), _my_program(), ': ', @_, "\n");
-    print color("reset");
+    my ($func, undef, $line) = caller; 
+    print (color("red"), _my_program(), " line $line: ");
+    print (color("reset"), @_, "\n");
     exit;
 }
 
@@ -845,7 +846,11 @@ sub fmtMemPercent {
 # get the number of user login. need User::Utmp. 
 # http://search.cpan.org/~mpiotr/User-Utmp-1.8/Utmp.pm
 sub getusers {
-    if(eval "require User::Utmp") {
+    if  (eval {require User::Utmp;1;} ne 1) {
+        # if module can't load
+        # &mywarn("");
+        return (0, 0);
+    } else {
         use User::Utmp qw(:constants :utmpx);
         my @utmp = getutx();
         endutxent();
@@ -905,8 +910,10 @@ sub showcursor {
 # for keyboard interface when running a program. 
 # read a char by time.
 sub readyforinterface {
-    if(eval "require Term::ReadKey") {
-        use Term::ReadKey;
+    if  (eval {require Term::ReadKey;1;} ne 1) {
+        # if module can't load
+    } else {
+        Term::ReadKey->import();
         ReadMode('cbreak');
 
         if (defined (my $char = ReadKey(-1)) ) {
@@ -919,6 +926,9 @@ sub readyforinterface {
 
         ReadMode('normal');
     }
+    #if(eval "require Term::ReadKey") {
+    #    use Term::ReadKey;
+    #}
 }
 
 sub dokey {
