@@ -851,7 +851,8 @@ sub getusers {
         # &mywarn("");
         return (0, 0);
     } else {
-        use User::Utmp qw(:constants :utmpx);
+        require User::Utmp qw(:constants :utmpx);
+
         my @utmp = getutx();
         endutxent();
         my @a;
@@ -910,7 +911,7 @@ sub showcursor {
 # for keyboard interface when running a program. 
 # read a char by time.
 sub readyforinterface {
-    if  (eval {require Term::ReadKey;1;} ne 1) {
+    if (eval {require Term::ReadKey;1;} ne 1) {
         # if module can't load
     } else {
         Term::ReadKey->import();
