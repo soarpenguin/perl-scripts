@@ -10,7 +10,7 @@
 #          First release Nov.27 2012
 # 1}}}
 
-use strict;
+#use strict;
 use warnings;
 use Getopt::Long;
 use File::Basename;
@@ -851,15 +851,16 @@ sub getusers {
         # &mywarn("");
         return (0, 0);
     } else {
-        require User::Utmp qw(:constants :utmpx);
+        #use User::Utmp qw(:constants :utmpx);
+        require User::Utmp; # qw(:constants :utmpx);
 
-        my @utmp = getutx();
-        endutxent();
+        my @utmp = User::Utmp::getutx();
+        User::Utmp::endutxent();
         my @a;
         ## @utmp
         foreach my $utent (@utmp) {
             # if($utent->{'ut_user'})
-            if($utent->{'ut_type'} == USER_PROCESS) {
+            if($utent->{'ut_type'} == User::Utmp::USER_PROCESS) {
                 push @a, $utent->{'ut_user'};  
             }
         }
