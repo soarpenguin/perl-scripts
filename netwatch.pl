@@ -71,7 +71,7 @@ $rrd_tmp->update(
 my $starttime = time;                #获取当前unix时间戳
 my $endtime = $starttime - 7200;   #2个小时之前的unix时间戳
 my %rtn = $rrd->graph(  #这里是定义每周，每月，每年的图形。
-		    timestamp => "both", 
+            timestamp => "both", 
             periods => [ qw{    weekly monthly annual}  ],  #定义所需的周期文件
             title => "Network Interface eth0",
             vertical_label => "Bytes/sec",

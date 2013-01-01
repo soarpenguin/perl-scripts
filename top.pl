@@ -846,7 +846,9 @@ sub fmtMemPercent {
 # get the number of user login. need User::Utmp. 
 # http://search.cpan.org/~mpiotr/User-Utmp-1.8/Utmp.pm
 sub getusers {
-    if  (eval {require User::Utmp;1;} ne 1) {
+    my $result = eval { require User::Utmp; };
+    #if(eval {require User::Utmp;1;} ne 1) {
+    if(! $result) {
         # if module can't load
         # &mywarn("");
         return (0, 0);
