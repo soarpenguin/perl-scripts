@@ -846,23 +846,23 @@ sub fmtMemPercent {
 # get the number of user login. need User::Utmp. 
 # http://search.cpan.org/~mpiotr/User-Utmp-1.8/Utmp.pm
 sub getusers {
-    my $result = eval { require User::Utmp; };
-    #if(eval {require User::Utmp;1;} ne 1) {
-    if(! $result) {
+    #my $result = eval { require User::Utmp; };
+    if(eval {require User::Utmp;1;} ne 1) {
+        #if(! $result) {
         # if module can't load
         # &mywarn("");
         return (0, 0);
     } else {
-        #use User::Utmp qw(:constants :utmpx);
-        require User::Utmp; # qw(:constants :utmpx);
+        use User::Utmp qw(:constants :utmpx);
+        #require User::Utmp; # qw(:constants :utmpx);
 
-        my @utmp = User::Utmp::getutx();
-        User::Utmp::endutxent();
+        my @utmp = getutx();
+        endutxent();
         my @a;
         ## @utmp
         foreach my $utent (@utmp) {
             # if($utent->{'ut_user'})
-            if($utent->{'ut_type'} == User::Utmp::USER_PROCESS) {
+            if($utent->{'ut_type'} == USER_PROCESS) {
                 push @a, $utent->{'ut_user'};  
             }
         }
