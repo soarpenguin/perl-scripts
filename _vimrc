@@ -7,7 +7,7 @@ set fencs=utf-8,usc-bom,euc-jp,gb18030,gbk,gb2312,cp936
 
 "set fonts
 "set guifont=Monospace\ 11
-set guifont=Nimbus\ Mono\ L\ Regular\ Oblique\ 11
+set guifont=Nimbus\ Mono\ L\ Regular\ Oblique\ 10
 colorscheme evening
 
 " 不要使用vi的键盘模式，而是vim自己的
@@ -392,3 +392,7 @@ endfunction
 "set listchars=tab:▸\ ,eol:¬
 "colorscheme evening
 "---------------------------------------------------------------
+set langmenu=en_US
+let $LANG='en_US'
+source $VIMRUNTIME/delmenu.vim
+source $VIMRUNTIME/menu.vim
