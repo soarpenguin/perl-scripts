@@ -86,7 +86,7 @@ my $ret = GetOptions(
 );
 
 if(! $ret) {
-	&usage();
+    &usage();
 }
 
 #if($help or $version) {
@@ -94,44 +94,44 @@ if(! $ret) {
 #}
 
 if(! -e $meminfo) {
-	print "Need the system file of $meminfo. Try mount /proc\n";
-	die;
+    print "Need the system file of $meminfo. Try mount /proc\n";
+    die;
 }
 
 # function for signal action
 sub catch_int {
-	my $signame = shift;
-	print color("red"), "Stoped by SIG$signame\n", color("reset");
-	exit;
+    my $signame = shift;
+    print color("red"), "Stoped by SIG$signame\n", color("reset");
+    exit;
 }
 $SIG{INT} = __PACKAGE__ . "::catch_int";
 $SIG{INT} = \&catch_int; # best strategy
 
 if($byte) {
-	$byteshift = 0;
-	$changed = 1;
+    $byteshift = 0;
+    $changed = 1;
 } elsif ($mb) {
-	$byteshift = 20;
-	$changed = 1;
+    $byteshift = 20;
+    $changed = 1;
 } elsif ($gb) {
-	$byteshift = 30;
-	$changed = 1;
+    $byteshift = 30;
+    $changed = 1;
 }
 ### $changed
 ### $byteshift
 
 if($count and $sleep) {
-	$countflag = 1;
-	if($count < 0) {
-		$count = $count * -1;
-	}
+    $countflag = 1;
+    if($count < 0) {
+        $count = $count * -1;
+    }
 } elsif ($sleep) {
-	$countflag = 0;
-	$count = 0;
+    $countflag = 0;
+    $count = 0;
 } else {
-	$countflag = 0;
-	$count = 0;
-	$sleep = 0;
+    $countflag = 0;
+    $count = 0;
+    $sleep = 0;
 }
 
 ### $sleep
@@ -140,151 +140,151 @@ if($count and $sleep) {
 
 do {
 
-	open($fd, "<", $meminfo);
-	die "Failed to open the file $meminfo" unless $fd;
+    open($fd, "<", $meminfo);
+    die "Failed to open the file $meminfo" unless $fd;
 
-	@lines = <$fd>;
-	close $fd;
-	#print @lines;
-	foreach my $line (@lines) {
-		if($line =~ /\bMemTotal:(\s+)(\d+)/) {
-			$line =~ s/[^0-9]//g;
-			$memtotal = $line;
-		} elsif ($line =~ /\bMemFree:(\s+)(\d+)/) {
-			$line =~ s/[^0-9]//g;
-			$memfree = $line;
-		} elsif ($line =~ /\bBuffers:(\s+)(\d+)/) {
-			$line =~ s/[^0-9]//g;
-			$membuf = $line;
-		} elsif ($line =~ /\bCached:(\s+)(\d+)/) {
-			$line =~ s/[^0-9]//g;
-			$memcached = $line;
-		} elsif ($line =~ /\bHighTotal:(\s+)(\d+)/) {
-			$line =~ s/[^0-9]//g;
-			$hightotal = $line;
-		} elsif ($line =~ /\bHighFree:(\s+)(\d+)/) {
-			$line =~ s/[^0-9]//g;
-			$highfree = $line;
-		} elsif ($line =~ /\bLowTotal:(\s+)(\d+)/) {
-			$line =~ s/[^0-9]//g;
-			$lowtotal = $line;
-		} elsif ($line =~ /\bLowFree:(\s+)(\d+)/) {
-			$line =~ s/[^0-9]//g;
-			$lowfree = $line;
-		} elsif ($line =~ /\bSwapTotal:(\s+)(\d+)/) {
-			$line =~ s/[^0-9]//g;
-			$swaptotal = $line;
-		} elsif ($line =~ /\bSwapFree:(\s+)(\d+)/) {
-			$line =~ s/[^0-9]//g;
-			$swapfree = $line;
-			last;
-		}
-	}
+    @lines = <$fd>;
+    close $fd;
+    #print @lines;
+    foreach my $line (@lines) {
+        if($line =~ /\bMemTotal:(\s+)(\d+)/i) {
+            $line =~ s/[^0-9]//g;
+            $memtotal = $line;
+        } elsif ($line =~ /\bMemFree:(\s+)(\d+)/i) {
+            $line =~ s/[^0-9]//g;
+            $memfree = $line;
+        } elsif ($line =~ /\bBuffers:(\s+)(\d+)/i) {
+            $line =~ s/[^0-9]//g;
+            $membuf = $line;
+        } elsif ($line =~ /\bCached:(\s+)(\d+)/i) {
+            $line =~ s/[^0-9]//g;
+            $memcached = $line;
+        } elsif ($line =~ /\bHighTotal:(\s+)(\d+)/i) {
+            $line =~ s/[^0-9]//g;
+            $hightotal = $line;
+        } elsif ($line =~ /\bHighFree:(\s+)(\d+)/i) {
+            $line =~ s/[^0-9]//g;
+            $highfree = $line;
+        } elsif ($line =~ /\bLowTotal:(\s+)(\d+)/i) {
+            $line =~ s/[^0-9]//g;
+            $lowtotal = $line;
+        } elsif ($line =~ /\bLowFree:(\s+)(\d+)/i) {
+            $line =~ s/[^0-9]//g;
+            $lowfree = $line;
+        } elsif ($line =~ /\bSwapTotal:(\s+)(\d+)/i) {
+            $line =~ s/[^0-9]//g;
+            $swaptotal = $line;
+        } elsif ($line =~ /\bSwapFree:(\s+)(\d+)/i) {
+            $line =~ s/[^0-9]//g;
+            $swapfree = $line;
+            last;
+        }
+    }
 
-	# I'm not sure the $2 will influence the profile. so not use it.
-	#foreach my $line (@lines) {
-	#	if($line =~ /\bMemTotal:(\s+)(\d+)/) {
-	#		$memtotal = $2;
-	#	} elsif ($line =~ /\bMemFree:(\s+)(\d+)/) {
-	#		$memfree = $2;
-	#	} elsif ($line =~ /\bBuffers:(\s+)(\d+)/) {
-	#		$membuf = $2;
-	#	} elsif ($line =~ /\bCached:(\s+)(\d+)/) {
-	#		$memcached = $2;
-	#	} elsif ($line =~ /\bHighTotal:(\s+)(\d+)/) {
-	#		$hightotal = $2;
-	#	} elsif ($line =~ /\bHighFree:(\s+)(\d+)/) {
-	#		$highfree = $2;
-	#	} elsif ($line =~ /\bLowTotal:(\s+)(\d+)/) {
-	#		$lowtotal = $2;
-	#	} elsif ($line =~ /\bLowFree:(\s+)(\d+)/) {
-	#		$lowfree = $2;
-	#	} elsif ($line =~ /\bSwapTotal:(\s+)(\d+)/) {
-	#		$swaptotal = $2;
-	#	} elsif ($line =~ /\bSwapFree:(\s+)(\d+)/) {
-	#		$swapfree = $2;
-	#		last;
-	#	}
-	#}
+    # I'm not sure the $2 will influence the profile. so not use it.
+    #foreach my $line (@lines) {
+    #	if($line =~ /\bMemTotal:(\s+)(\d+)/) {
+    #		$memtotal = $2;
+    #	} elsif ($line =~ /\bMemFree:(\s+)(\d+)/) {
+    #		$memfree = $2;
+    #	} elsif ($line =~ /\bBuffers:(\s+)(\d+)/) {
+    #		$membuf = $2;
+    #	} elsif ($line =~ /\bCached:(\s+)(\d+)/) {
+    #		$memcached = $2;
+    #	} elsif ($line =~ /\bHighTotal:(\s+)(\d+)/) {
+    #		$hightotal = $2;
+    #	} elsif ($line =~ /\bHighFree:(\s+)(\d+)/) {
+    #		$highfree = $2;
+    #	} elsif ($line =~ /\bLowTotal:(\s+)(\d+)/) {
+    #		$lowtotal = $2;
+    #	} elsif ($line =~ /\bLowFree:(\s+)(\d+)/) {
+    #		$lowfree = $2;
+    #	} elsif ($line =~ /\bSwapTotal:(\s+)(\d+)/) {
+    #		$swaptotal = $2;
+    #	} elsif ($line =~ /\bSwapFree:(\s+)(\d+)/) {
+    #		$swapfree = $2;
+    #		last;
+    #	}
+    #}
 
-	$memshared = 0;
-	$memused = $memtotal - $memfree;
-	$swapused = $swaptotal - $swapfree;
-	$minus = $memused - $membuf - $memcached;
-	$plus = $memfree + $membuf + $memcached;
+    $memshared = 0;
+    $memused = $memtotal - $memfree;
+    $swapused = $swaptotal - $swapfree;
+    $minus = $memused - $membuf - $memcached;
+    $plus = $memfree + $membuf + $memcached;
 
-	if($changed) {
-		$memtotal = &sizeshift($memtotal, $byteshift); # mem total/used/free/buffer/cached
-		$memused = &sizeshift($memused, $byteshift);
-		$memfree = &sizeshift($memfree, $byteshift);
-		$membuf = &sizeshift($membuf, $byteshift);
-		$memcached = &sizeshift($memcached, $byteshift);
-		$lowtotal = &sizeshift($lowtotal, $byteshift);	# low total/free
-		$lowfree = &sizeshift($lowfree, $byteshift);
-		$hightotal = &sizeshift($hightotal, $byteshift);  #high total/free
-		$highfree = &sizeshift($highfree, $byteshift);
-		$minus = &sizeshift($minus, $byteshift);	# minus/plus buffer/cached
-		$plus = &sizeshift($plus, $byteshift);
-		$swaptotal = &sizeshift($swaptotal, $byteshift); # swap total/used/free
-		$swapused = &sizeshift($swapused, $byteshift);
-		$swapfree = &sizeshift($swapfree, $byteshift);
-	}
-	
-	$| = 1;
-	print color("blue"); # use blue color for infomation head.
-	printf("%18s %10s %10s %10s %10s %10s\n", "total", "used", 
-				"free", "shared", "buffers", "cached");
-	print color("reset"); # reset the default color.
+    if($changed) {
+        $memtotal = &sizeshift($memtotal, $byteshift); # mem total/used/free/buffer/cached
+        $memused = &sizeshift($memused, $byteshift);
+        $memfree = &sizeshift($memfree, $byteshift);
+        $membuf = &sizeshift($membuf, $byteshift);
+        $memcached = &sizeshift($memcached, $byteshift);
+        $lowtotal = &sizeshift($lowtotal, $byteshift);	# low total/free
+        $lowfree = &sizeshift($lowfree, $byteshift);
+        $hightotal = &sizeshift($hightotal, $byteshift);  #high total/free
+        $highfree = &sizeshift($highfree, $byteshift);
+        $minus = &sizeshift($minus, $byteshift);	# minus/plus buffer/cached
+        $plus = &sizeshift($plus, $byteshift);
+        $swaptotal = &sizeshift($swaptotal, $byteshift); # swap total/used/free
+        $swapused = &sizeshift($swapused, $byteshift);
+        $swapfree = &sizeshift($swapfree, $byteshift);
+    }
 
-	printf("%-6s %11d %10d %10d %10d %10d %10d\n", "Mem:", $memtotal, $memused,
-				$memfree, $memshared, $membuf, $memcached);
-	
-	# diplay the detail of low/high memory infomation
-	if($lhdetail) {
-		printf("%-6s %11d %10d %10d\n", "Low:", $lowtotal, $lowtotal-$lowfree, $lowfree);
-		printf("%-6s %11d %10d %10d\n", "High:", $hightotal, $hightotal-$highfree, $highfree);
-	}
+    $| = 1;
+    print color("blue"); # use blue color for infomation head.
+    printf("%18s %10s %10s %10s %10s %10s\n", "total", "used", 
+        "free", "shared", "buffers", "cached");
+    print color("reset"); # reset the default color.
 
-	if(! $oldfmt) {
-		printf("%18s %10d %10d\n", "-/+ buffers/cache:", $minus, $plus);
-	}
-	
-	printf("%-6s %11d %10d %10d\n", "Swap:", $swaptotal, $swapused, $swapfree);
+    printf("%-6s %11d %10d %10d %10d %10d %10d\n", "Mem:", $memtotal, $memused,
+        $memfree, $memshared, $membuf, $memcached);
 
-	if($total) {
-		printf("%-6s %11d %10d %10d\n", "Total:", $memtotal + $swaptotal, 
-				$memused+$swapused, $memfree+$swapfree);
-	}
+    # diplay the detail of low/high memory infomation
+    if($lhdetail) {
+        printf("%-6s %11d %10d %10d\n", "Low:", $lowtotal, $lowtotal-$lowfree, $lowfree);
+        printf("%-6s %11d %10d %10d\n", "High:", $hightotal, $hightotal-$highfree, $highfree);
+    }
 
-	if($countflag) {
-		$count -= 1;
-		if($count <= 0) {
-			$sleep = 0;
-		}
-	}
-	
-	if($sleep) {
-		select(undef, undef, undef, $sleep); # use "select" for "usleep".
-	}
-	print "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n"
+    if(! $oldfmt) {
+        printf("%18s %10d %10d\n", "-/+ buffers/cache:", $minus, $plus);
+    }
+
+    printf("%-6s %11d %10d %10d\n", "Swap:", $swaptotal, $swapused, $swapfree);
+
+    if($total) {
+        printf("%-6s %11d %10d %10d\n", "Total:", $memtotal + $swaptotal, 
+            $memused+$swapused, $memfree+$swapfree);
+    }
+
+    if($countflag) {
+        $count -= 1;
+        if($count <= 0) {
+            $sleep = 0;
+        }
+    }
+
+    if($sleep) {
+        select(undef, undef, undef, $sleep); # use "select" for "usleep".
+        print "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n"
+    }
 
 } while ($sleep);
 
 sub usage {
-	print "$script version $myvesion\n";
-	print $usage;
-	exit;
+    print "$script version $myvesion\n";
+    print $usage;
+    exit;
 }
 
 sub version {
-	print "$script version $myvesion\n";
-	exit;
+    print "$script version $myvesion\n";
+    exit;
 }
 
 sub sizeshift {
-	my ($size, $shift) = @_;
-	
-	return (($size << 10) >> $shift);
+    my ($size, $shift) = @_;
+
+    return (($size << 10) >> $shift);
 }
 
 ### $byteshift
