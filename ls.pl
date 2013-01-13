@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 #
 
-# ***.pl -- ***********. {{{1
+# ls.pl -- ls command implementation in perl. {{{1
 #
 # Author:  soarpenguin <soarpenguin@gmail.com>
 #          First release Nov.14 2012
