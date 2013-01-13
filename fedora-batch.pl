@@ -27,6 +27,10 @@ my $myversion = '0.1.0';
 my $usage = "
 Usage: $script [option]...
 
+       -c, --command 
+            The command for install software. 
+            such as: yum, apt-get, aptitude 
+
        -f, --file             
             File contains the softwares need to be installed. 
             One software a line. like: 
@@ -44,20 +48,10 @@ if ($^O ne 'linux') {
     die "Only linux is supported but I am on $^O.\n";
 }
 
-my $ret;
-chomp($ret = `whereis yum`);
-### $ret
-my @array = split(":", $ret);
-### @array
-if(scalar @array <= 1) {
-    print "The install command \"$array[0]\" not support in your platform.\n";
-    exit;
-}
-
-my $command = $array[0];
-my $file; 
+my ($file, $command, $ret); 
 
 $ret = GetOptions( 
+    'command|c=s' => \$command,
     'file|f=s'  => \$file,
     'help'	    => \&usage,
     'version|V' => \&version
@@ -67,8 +61,24 @@ if(! $ret) {
     &usage();
 }
 
-&myprint("A file must be specified.")
-    unless($file);
+if(! $command) {
+    chomp($ret = `whereis yum`);
+} else {
+    chomp($ret = `whereis $command`);
+}
+### $ret
+my @array = split(":", $ret);
+### @array
+if(scalar @array <= 1) {
+    print "The install command \"$array[0]\" not support in your platform.\n";
+    exit;
+}
+$command = $array[0];
+
+if(! $file) {
+    &myprint("A file must be specified.");
+    &usage();
+}
 
 if($> ne 0) {
     &myprint("Must run as root when install softwares.");
@@ -87,15 +97,17 @@ if(! $fd) {
 }
 
 my $search = $command . ' search ';
-my $install = $command . ' install ';
+my $install = $command . ' -y install ';
 my $result;
 my (@successed, @failed);
+print "Start install software:\n";
+print "==========================================\n";
 while ($line = <$fd>) {
     chomp($line);
     ### $line;
     &yesinstall("###Trying install the software of $line.");
     &yesinstall("Please waitting for a minuter......");
-    $result = `$install -y $line 2>&1`;
+    $result = `$install $line 2>&1`;
     if($result =~ "already installed" or $result =~ "Installed:") {
         print color("blue");
         print("+++The $line installed successful.\n\n");
