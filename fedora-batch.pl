@@ -92,7 +92,7 @@ if(! -e $file) {
 my ($fd, $line);
 open($fd, "<", $file);
 if(! $fd) {
-    myprint("Failed to open the file \"$file\". Try it again.");
+    &myprint("Failed to open the file \"$file\". Try it again.");
     exit;
 }
 
