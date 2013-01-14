@@ -1,0 +1,17 @@
+gcc
+g++
+build-essential
+vim
+gvim
+autoconf
+automake
+git
+gitk
+svn
+ddd
+make
+valgrind
+bin86
+htop
+iftop
+mysql-server
