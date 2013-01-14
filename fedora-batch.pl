@@ -76,8 +76,12 @@ if(scalar @array <= 1) {
 $command = $array[0];
 
 if(! $file) {
-    &myprint("A file must be specified.");
-    &usage();
+    if(@ARGV > 0) {
+        $file = $ARGV[0];
+    } else {
+        &myprint("A file must be specified.");
+        &usage();
+    }
 }
 
 if($> ne 0) {
@@ -107,6 +111,10 @@ while ($line = <$fd>) {
     ### $line;
     &yesinstall("###Trying install the software of $line.");
     &yesinstall("Please waitting for a minuter......");
+    if($line =~ /^(\s)*#/) {
+        print "\n";
+        next;
+    }
     $result = `$install $line 2>&1`;
     if($result =~ "already installed" or $result =~ "Installed:") {
         print color("blue");
