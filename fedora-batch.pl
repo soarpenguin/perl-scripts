@@ -23,15 +23,16 @@ use Term::ANSIColor;
 my $script = basename $0;
 my $myversion = '0.1.0';
 
+&clrscr();
 
 my $usage = "
 Usage: $script [option]...
 
-       -c, --command 
+       -c <cmd>, --command <cmd>
             The command for install software. 
             such as: yum, apt-get, aptitude 
 
-       -f, --file             
+       -f <file>, --file <file>
             File contains the softwares need to be installed. 
             One software a line. like: 
                 gvim
@@ -61,19 +62,37 @@ if(! $ret) {
     &usage();
 }
 
+my @commands = ("yum", "apt-get", "aptitude");
+my (@array, $found);
+
 if(! $command) {
-    chomp($ret = `whereis yum`);
+    foreach my $cmd (@commands) {
+        chomp($ret = `whereis $cmd`);
+        @array = split(":", $ret);
+        if(scalar @array <= 1) {
+            $found = 0;
+        } else {
+            $command = $array[0];
+            $found = 1;
+            last;
+        }
+    }
+    if(! $found) {
+        print "Follow install commands not supported in your platform.\n";
+        print "++\t@commands\n";
+        print "Please choose a supported command for try again!\n";
+        exit;
+    }
 } else {
     chomp($ret = `whereis $command`);
+    @array = split(":", $ret);
+    ### @array
+    if(scalar @array <= 1) {
+        print "The install command \"$array[0]\" not support in your platform.\n";
+        exit;
+    }
+    $command = $array[0];
 }
-### $ret
-my @array = split(":", $ret);
-### @array
-if(scalar @array <= 1) {
-    print "The install command \"$array[0]\" not support in your platform.\n";
-    exit;
-}
-$command = $array[0];
 
 if(! $file) {
     if(@ARGV > 0) {
@@ -93,6 +112,7 @@ if(! -e $file) {
     exit;
 }
 ##------begin install softwares-----------
+$| = 1;
 my ($fd, $line);
 open($fd, "<", $file);
 if(! $fd) {
@@ -102,31 +122,38 @@ if(! $fd) {
 
 my $search = $command . ' search ';
 my $install = $command . ' -y install ';
-my $result;
+my ($result, $etimes);
+$etimes = 0;
 my (@successed, @failed);
-print "Start install software:\n";
+print "Start install software: use the command \"$command\"\n";
 print "==========================================\n";
 while ($line = <$fd>) {
     chomp($line);
     ### $line;
-    &yesinstall("###Trying install the software of $line.");
-    &yesinstall("Please waitting for a minuter......");
-    if($line =~ /^(\s)*#/) {
-        print "\n";
+    if($line =~ /(^(\s)*#)|(^$)|(^(\s)*\/\/)/) {
         next;
     }
+    &yesinstall("###Trying install the software of $line.");
+    &yesinstall("Please waitting for a minuter......");
     $result = `$install $line 2>&1`;
     if($result =~ "already installed" or $result =~ "Installed:") {
         print color("blue");
         print("+++The $line installed successful.\n\n");
         print color("reset");
         push @successed, $line;
+        $etimes = 0;
     } elsif ($result =~ "No package $line available") {
         &myprint("Check the name of software: $line\n");
         push @failed, $line;
+        if(++$etimes > 5) {
+            last;
+        }
     } else {
         &myprint("$result\n");
         push @failed, $line;
+        if(++$etimes > 5) {
+            last;
+        }
     }
     ### $result
 }
@@ -182,3 +209,8 @@ sub yesinstall {
     print color("reset");
 }
 
+# Esc[2JEsc[1;1H    - Clear screen and move cursor to 1,1 (upper left) pos.
+#define clrscr()              puts ("\e[2J\e[1;1H")
+sub clrscr {
+    print "\e[2J\e[1;1H";
+}
