@@ -12,7 +12,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 use File::Basename;
-#use Smart::Comments;
+use Smart::Comments;
 use File::Spec::Functions;
 use POSIX qw(strftime);
 use Cwd;
@@ -29,11 +29,11 @@ my $usage = "
 Usage: $script [option]... <files/dirs>
 
        -t <tag,tag,..>, --tags <tag,tag,..>
-            The tags for research. 
-            such as: FIXME,TODO,BUG  
+            The tags for research, separated by \',\'. 
+            Such as: FIXME,TODO,BUG
 
        -e <ext,ext,..>, --exts <ext,ext,..>             
-            Source code file extents for research file.
+            Source code file extents for research file, separated by \',\'.
             such as: .c,.h,.pl etc
 
        -o <file>, --output <file>
@@ -156,7 +156,8 @@ sub scan_file {
         while($line = <$fd>) {
             $lineno++;
             foreach my $tag (@_) {
-                if($line =~ $tag) {
+                # TODO support the regx.
+                if($line =~ m/$tag/) {
                     $line =~ s/^\s+//;
                     print("[$tag], $filename, ($lineno), $line");
                 }
