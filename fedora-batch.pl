@@ -41,6 +41,9 @@ Usage: $script [option]...
        -h, --help 
             Display this help and exit
 
+       -l <file>, --list <file> 
+            Display the file content of software list.
+
        -V,  --version  
             output version information and exit
 ";
@@ -49,17 +52,31 @@ if ($^O ne 'linux') {
     die "Only linux is supported but I am on $^O.\n";
 }
 
-my ($file, $command, $ret); 
+my ($file, $command, $ret, $list); 
 
 $ret = GetOptions( 
     'command|c=s' => \$command,
     'file|f=s'  => \$file,
-    'help'	    => \&usage,
+    'help|h'	=> \&usage,
+    'list|l=s'    => \$list,
     'version|V' => \&version
 );
 
 if(! $ret) {
     &usage();
+}
+
+if($list) {
+    open(my $fd, "<", $list);
+    if(!$fd) {
+        print "Open the file $list failed!\n";
+        exit;
+    }
+    print "The software list is:\n";
+    while(my $l = <$fd>) {
+        print $l
+    }
+    exit;
 }
 
 my @commands = ("yum", "apt-get", "aptitude");
