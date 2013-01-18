@@ -1,17 +1,31 @@
 gcc
-g++
-build-essential
+gcc-c++
+# g++
+# build-essential
 vim
 gvim
 autoconf
 automake
+ctags
+cscope
 git
 gitk
 svn
 ddd
 make
 valgrind
-bin86
+# bin86
 htop
 iftop
 mysql-server
+
+libevent
+libevent-devel
+
+#### install for nagios
+screen
+httpd
+php
+gcc
+glibc
+glibc-common
