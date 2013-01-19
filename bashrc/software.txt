@@ -18,9 +18,11 @@ valgrind
 htop
 iftop
 mysql-server
+mtr
 
 libevent
 libevent-devel
+ncurses-devel
 
 #### install for nagios
 screen
