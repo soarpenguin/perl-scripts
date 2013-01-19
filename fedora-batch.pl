@@ -23,8 +23,6 @@ use Term::ANSIColor;
 my $script = basename $0;
 my $myversion = '0.1.0';
 
-&clrscr();
-
 my $usage = "
 Usage: $script [option]...
 
@@ -37,6 +35,10 @@ Usage: $script [option]...
             One software a line. like: 
                 gvim
                 git
+
+       -r <line1,line2>, --range <line1,line2>
+            Set the range for install software in softlist.
+            From (line1 to line2).
 
        -h, --help 
             Display this help and exit
@@ -52,13 +54,14 @@ if ($^O ne 'linux') {
     die "Only linux is supported but I am on $^O.\n";
 }
 
-my ($file, $command, $ret, $list); 
+my ($file, $command, $ret, $list, $range); 
 
 $ret = GetOptions( 
     'command|c=s' => \$command,
     'file|f=s'  => \$file,
     'help|h'	=> \&usage,
-    'list|l=s'    => \$list,
+    'list|l=s'  => \$list,
+    'range|r=s' => \$range,
     'version|V' => \&version
 );
 
@@ -66,6 +69,29 @@ if(! $ret) {
     &usage();
 }
 
+# set the range
+my ($n1, $n2);
+if($range) {
+    ($n1, $n2) = split(",", $range);
+    if($n1 and $n1 =~ /^\d+$/g) {
+        if($n2 and $n2 =~ /^\d+$/g) {
+            if($n2 < $n1) {
+                my $tmp = $n1;
+                $n1 = $n2;
+                $n2 = $tmp;
+            }
+            print "The range your set is: $n1 ~ $n2.\n";
+        } else {
+            print "Skip the range your set, check the range valid!\n";
+            $range = undef;
+        }
+    } else {
+        print "Skip the range your set, check the range valid!\n";
+        $range = undef;
+    }
+}
+
+# list the software file.
 if($list) {
     open(my $fd, "<", $list);
     if(!$fd) {
@@ -79,6 +105,7 @@ if($list) {
     exit;
 }
 
+# set install command.
 my @commands = ("yum", "apt-get", "aptitude");
 my (@array, $found);
 
@@ -111,6 +138,7 @@ if(! $command) {
     $command = $array[0];
 }
 
+# set the file of the software list.
 if(! $file) {
     if(@ARGV > 0) {
         $file = $ARGV[0];
@@ -119,13 +147,14 @@ if(! $file) {
         &usage();
     }
 }
-
-if($> ne 0) {
-    &myprint("Must run as root when install softwares.");
-    exit;
-}
 if(! -e $file) {
     &myprint("The file \"$file\" is not exists.");
+    exit;
+}
+
+# check the install privilege.
+if($> ne 0) {
+    &myprint("Must run as root when install softwares.");
     exit;
 }
 ##------begin install softwares-----------
@@ -139,8 +168,9 @@ if(! $fd) {
 
 my $search = $command . ' search ';
 my $install = $command . ' -y install ';
-my ($result, $etimes);
+my ($result, $etimes, $count);
 $etimes = 0;
+$count = 1;
 my (@successed, @failed);
 print "Start install software: use the command \"$command\"\n";
 print "==========================================\n";
@@ -148,17 +178,28 @@ while ($line = <$fd>) {
     chomp($line);
     ### $line;
     if($line =~ /(^(\s)*#)|(^$)|(^(\s)*\/\/)/) {
+        $count++;
         next;
+    }
+    if($range) {
+        if($count < $n1) {
+            $count++;
+            next;
+        } elsif($count > $n2){
+            last;
+        }
     }
     &yesinstall("###Trying install the software of $line.");
     &yesinstall("Please waitting for a minuter......");
     $result = `$install $line 2>&1`;
-    if($result =~ "already installed" or $result =~ "Installed:") {
+    if($result =~ "already installed" or $result =~ "Installed:"
+        or $result =~ "Updated:") {
         print color("blue");
         print("+++The $line installed successful.\n\n");
         print color("reset");
         push @successed, $line;
         $etimes = 0;
+        $count++;
     } elsif ($result =~ "No package $line available") {
         &myprint("Check the name of software: $line\n");
         push @failed, $line;
@@ -176,6 +217,7 @@ while ($line = <$fd>) {
 }
 
 ## Summary for installed software.
+&clrscr();
 print "Transaction Summary\n";
 print "==========================================\nInstalled:\n";
 if(scalar @successed > 0) {
