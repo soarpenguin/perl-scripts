@@ -193,7 +193,8 @@ while ($line = <$fd>) {
     &yesinstall("Please waitting for a minuter......");
     $result = `$install $line 2>&1`;
     if($result =~ "already installed" or $result =~ "Installed:"
-        or $result =~ "Updated:") {
+        or $result =~ "Updated:" or $result =~ "already"
+        or $result =~ "newly installed") {
         print color("blue");
         print("+++The $line installed successful.\n\n");
         print color("reset");
