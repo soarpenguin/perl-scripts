@@ -23,6 +23,15 @@ mtr
 libevent
 libevent-devel
 ncurses-devel
+# pcp-import-iostat2pcp
+
+# install systemtap
+systemtap
+kernel-devel
+kernel-debug-devel
+yum-utils
+debuginfo-install 
+kernel
 
 #### install for nagios
 screen
@@ -31,3 +40,4 @@ php
 gcc
 glibc
 glibc-common
+
