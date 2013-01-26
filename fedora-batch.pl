@@ -114,14 +114,10 @@ my (@array, $found);
 
 if(! $command) {
     foreach my $cmd (@commands) {
-        chomp($ret = `whereis $cmd`);
-        @array = split(":", $ret);
-        if(scalar @array <= 1) {
-            $found = 0;
-        } else {
-            $command = $array[0];
-            $found = 1;
-            last;
+        if(&searchCmd($cmd)) {
+           $found = 1;
+           $command = $cmd;
+           last;
         }
     }
     if(! $found) {
@@ -131,14 +127,11 @@ if(! $command) {
         exit;
     }
 } else {
-    chomp($ret = `whereis $command`);
-    @array = split(":", $ret);
-    ### @array
-    if(scalar @array <= 1) {
+    $found = &searchCmd($command);
+    if(! $found) {
         print "The install command \"$array[0]\" not support in your platform.\n";
         exit;
     }
-    $command = $array[0];
 }
 
 # set the file of the software list.
@@ -242,6 +235,9 @@ if(scalar @failed > 0) {
     print color("reset");
 }
 
+if(&searchCmd("notify-send")) {
+    $ret = `notify-send -t 5000 "Software install finished."`;
+}
 #-----------------------------------------------------
 # functions
 sub usage {
@@ -271,6 +267,20 @@ sub yesinstall {
     print color("green");
     print("@_ \n");
     print color("reset");
+}
+
+sub searchCmd {
+    my $cmd = shift;
+    my ($ret, @array, $found);
+
+    chomp($ret = `whereis $cmd`);
+    @array = split(":", $ret);
+    if(scalar @array <= 1) {
+        $found = 0;
+    } else {
+        $found = 1;
+    }
+    return $found;
 }
 
 # Esc[2JEsc[1;1H    - Clear screen and move cursor to 1,1 (upper left) pos.
