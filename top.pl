@@ -30,6 +30,7 @@ my $myversion = '0.1.0';
 my $script = &_my_program();
 my $pagesize = &getpagesize();
 my $Hertz = &hertz_hack();
+my $header_row = 8;
 
 my $usage = "
 Usage: $script [option]...
@@ -112,7 +113,7 @@ if($col < 80) {
     print color("red"), "Need >= 80 column screen.\n", color("reset");
     exit;
 } else {
-    $row -= 8;
+    $row -= $header_row;
 }
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -120,7 +121,7 @@ if($col < 80) {
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 sub catch_int {
     my $signame = shift;
-    &gotoxy($row+8, 0);
+    &gotoxy($row + $header_row, 0);
     print color("red"), "Stoped by SIG$signame\n", color("reset");
     &showcursor();
     # &echo();
@@ -326,7 +327,7 @@ START:
             my $line = <$fd>;
             close $fd;
             
-            ( $proc_t->{"pid"}, $proc_t->{"cmd"},$proc_t->{"state"},$proc_t->{"ppid"},
+            ( $proc_t->{"pid"}, $proc_t->{"cmd"}, $proc_t->{"state"}, $proc_t->{"ppid"},
               $proc_t->{"pgrp"}, $proc_t->{"session"}, $proc_t->{"tty"}, 
               $proc_t->{"tpgid"}, $proc_t->{"flags"}, $proc_t->{"min_flt"}, 
               $proc_t->{"cmin_flt"}, $proc_t->{"maj_flt"},
