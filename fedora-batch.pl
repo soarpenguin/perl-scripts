@@ -21,10 +21,11 @@ use Term::ANSIColor;
 #print color("green"), "Go!\n", color("reset");
 
 my $script = basename $0;
-my $myversion = '0.1.0';
+my $myversion = '0.2.0';
 
+# useage string.
 my $usage = "
-Usage: $script [option]...
+Usage: $script [option...] file
 
        -c <cmd>, --command <cmd>
             The command for install software. 
@@ -50,12 +51,13 @@ Usage: $script [option]...
             output version information and exit
 ";
 
+# check for platform.
 if ($^O ne 'linux') {
     die "Only linux is supported but I am on $^O.\n";
 }
 
 my ($file, $command, $ret, $list, $range); 
-
+# command option resolving.
 $ret = GetOptions( 
     'command|c=s' => \$command,
     'file|f=s'  => \$file,
@@ -65,6 +67,7 @@ $ret = GetOptions(
     'version|V' => \&version
 );
 
+# check command resolving correctly.
 if(! $ret) {
     &usage();
 }
@@ -111,14 +114,10 @@ my (@array, $found);
 
 if(! $command) {
     foreach my $cmd (@commands) {
-        chomp($ret = `whereis $cmd`);
-        @array = split(":", $ret);
-        if(scalar @array <= 1) {
-            $found = 0;
-        } else {
-            $command = $array[0];
-            $found = 1;
-            last;
+        if(&searchCmd($cmd)) {
+           $found = 1;
+           $command = $cmd;
+           last;
         }
     }
     if(! $found) {
@@ -128,14 +127,11 @@ if(! $command) {
         exit;
     }
 } else {
-    chomp($ret = `whereis $command`);
-    @array = split(":", $ret);
-    ### @array
-    if(scalar @array <= 1) {
+    $found = &searchCmd($command);
+    if(! $found) {
         print "The install command \"$array[0]\" not support in your platform.\n";
         exit;
     }
-    $command = $array[0];
 }
 
 # set the file of the software list.
@@ -157,6 +153,7 @@ if($> ne 0) {
     &myprint("Must run as root when install softwares.");
     exit;
 }
+
 ##------begin install softwares-----------
 $| = 1;
 my ($fd, $line);
@@ -238,8 +235,11 @@ if(scalar @failed > 0) {
     print color("reset");
 }
 
+if(&searchCmd("notify-send")) {
+    $ret = `notify-send -t 5000 "Software install finished."`;
+}
 #-----------------------------------------------------
-#
+# functions
 sub usage {
     print $usage;
     exit;
@@ -267,6 +267,20 @@ sub yesinstall {
     print color("green");
     print("@_ \n");
     print color("reset");
+}
+
+sub searchCmd {
+    my $cmd = shift;
+    my ($ret, @array, $found);
+
+    chomp($ret = `whereis $cmd`);
+    @array = split(":", $ret);
+    if(scalar @array <= 1) {
+        $found = 0;
+    } else {
+        $found = 1;
+    }
+    return $found;
 }
 
 # Esc[2JEsc[1;1H    - Clear screen and move cursor to 1,1 (upper left) pos.

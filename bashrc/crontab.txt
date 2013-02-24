@@ -1,0 +1,2 @@
+25 16 * * * perl /home/fedora/hello.pl >> /home/fedora/test.log 2>&1
+*/1 * * * * perl /home/fedora/hello.pl >> /home/fedora/test1.log 2>&1
