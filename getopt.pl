@@ -21,6 +21,7 @@
 ###################################################################
 
 use strict;
+use File::Basename;
 use Getopt::Long;
 
 # test some modules installed or not.
@@ -33,6 +34,7 @@ BEGIN {
 	}
 }
  
+my $script = File::Basename::basename($0);
 my @libs    = ();
 my %flags   = ();
 my ( $verbose, $all, $more, $debug, $test);
@@ -49,6 +51,30 @@ GetOptions(
 );
 
 
+use Getopt::Std qw( getopts );
+
+my %opts;
+
+getopts("a:dhl:p:t:uk", \%opts)
+    or die &usage();
+
+if ($opts{h}) {
+    print &usage();
+    exit;
+}
+
+sub usage {
+    return <<'_EOC_';
+Usage:
+    $script [optoins]
+
+Options:
+    -h                  Print this usage.
+
+Examples:
+    $script -h
+_EOC_
+}
 ### $verbose
 ### $more
 ### $debug
