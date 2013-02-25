@@ -236,8 +236,10 @@ if(scalar @failed > 0) {
 }
 
 if(&searchCmd("notify-send")) {
-    $ret = `notify-send -t 5000 "Software install finished."`;
+    $ret = `notify-send -t 5000 \"Software install finished.\"`;
 }
+
+print "\a";
 #-----------------------------------------------------
 # functions
 sub usage {
