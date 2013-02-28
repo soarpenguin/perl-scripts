@@ -52,6 +52,7 @@ if (@ARGV > 0) {
 my @st_cpu;
 my $uptime;
 
+#----------------------main---------------------------
 &main();
 #print "\n";
 
@@ -91,7 +92,9 @@ sub main {
 ### $count
     
     # print infomation header
-    print "$sysinfo[0] $sysinfo[2] ($sysinfo[1])\t$time\t_$sysinfo[11]_ ($nr CPU)\n\n";
+    print "$sysinfo[0] $sysinfo[2] ($sysinfo[1])\t$time\t_$sysinfo[11]_ ($nr CPU)\n";
+    #printf("\n%-11s  CPU  %%usr %%nice  %%sys %%iowait  %%irq  %%soft %%steal %%guest %%gnice %%idle\n", $tm);
+    printf("\n%-11s  CPU    %%usr   %%nice    %%sys %%iowait    %%irq   %%soft  %%steal  %%guest  %%gnice   %%idle\n", &current_time());
     
     if($interval and $interval > 0) {
         $running = -1;
@@ -304,9 +307,6 @@ sub read_stat_irq {
 
 sub write_stats_core {
     my $tm = shift;
-
-    #printf("\n%-11s  CPU  %%usr %%nice  %%sys %%iowait  %%irq  %%soft %%steal %%guest %%gnice %%idle\n", $tm);
-    printf("\n%-11s  CPU    %%usr   %%nice    %%sys %%iowait    %%irq   %%soft  %%steal  %%guest  %%gnice   %%idle\n", $tm);
 
     printf("%-11s  all", &current_time());
     printf("  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f\n",
