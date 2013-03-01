@@ -27,6 +27,17 @@ my $STAT = "/proc/stat";
 my $INTERRUPTS = "/proc/interrupts";
 my $SOFTIRQS = "/proc/softirqs";
 
+use constant M_D_CPU => 0b0001;
+use constant M_D_IRQ_SUM  => 0b0010;
+use constant M_D_IRQ_CPU  => 0b0100;
+use constant M_D_SOFTIRQS => 0b1000;
+
+use constant K_ALL  => "ALL";
+use constant K_SUM  => "SUM";
+use constant K_CPU  => "CPU";
+use constant K_SCPU => "SCPU";
+use constant K_ON   => "ON";
+
 $|++;
 #if(@ARGV < 1) {
 #    print &usage();
@@ -36,14 +47,10 @@ $|++;
 getopts("hAI:uP:V", \%opts)
     or die print &usage();
 
-## %opts
-if ($opts{h}) {
-    print &usage();
-    exit;
-} elsif ($opts{V}) {
-    &version($script, $version);
-    exit;
-}
+### %opts
+my $actflags = 0;
+$actflags = &deal_opt(\%opts);
+### $actflags
 
 if (@ARGV > 0) {
     ($interval, $count) = @ARGV;
@@ -329,4 +336,53 @@ sub current_time {
     $h = $h < 12 ? "AM" : "PM";
 
     return $now . " $h"; 
+}
+
+sub get_bit {
+    my ($actflag, $mode) = @_;
+
+    return ($actflag & $mode);
+}
+
+sub deal_opt {
+    my $opts = shift;
+    my $acts = 0;
+    ### $opts
+
+    while (my ($k, $v) = each %$opts) {
+        ### $k
+        ### $v
+        if($k =~ /^I$/) {
+            if($v == K_SUM) {
+                $acts |= M_D_IRQ_SUM;
+            } elsif ($v == K_CPU) {
+                $acts |= M_D_IRQ_CPU;
+            } elsif ($v == K_SCPU) {
+                $acts |= M_D_SOFTIRQS;
+            } elsif ($v == K_ALL) {
+                $acts |= M_D_IRQ_SUM + M_D_IRQ_CPU + M_D_SOFTIRQS;
+            } else {
+                print &usage();
+                exit;
+            }
+        } elsif ($k =~ /^P$/) {
+            # TODO: add -P option 
+        } elsif ($k =~ /^A$/) {
+            ### $k
+            $acts |= M_D_CPU + M_D_IRQ_SUM + M_D_IRQ_CPU + M_D_SOFTIRQS; 
+        } elsif ($k =~ /^u$/) {
+            $acts |= M_D_CPU;
+        } elsif ($k =~ /^h/) {
+            print &usage();
+            exit;
+        } elsif ($k =~ /^V/) {
+            &version($script, $version);
+            exit;
+        } else {
+            print &usage();
+            exit;
+        }
+    }
+
+    return $acts;
 }
