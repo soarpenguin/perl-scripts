@@ -59,17 +59,15 @@ if (@ARGV > 0) {
 my @st_cpu;
 my $uptime;
 
+my ($row, $col) = &get_winsize();
+### $row
+### $col
 #----------------------main---------------------------
 &main();
 #print "\n";
 
 sub main {
     my $running = 0;
-    my $time = `date +"%m/%d/%Y"`;
-    chomp($time);
-### $time
-    my @sysinfo = split(" ", `uname -a`);
-### @sysinfo
     my $hz = POSIX::sysconf( &POSIX::_SC_CLK_TCK ) || 100;
 ### $hz
     my $nr = &get_cpu_nr();
@@ -97,9 +95,8 @@ sub main {
 ### @st_irq
 ### $interval
 ### $count
-    
-    # print infomation header
-    print "$sysinfo[0] $sysinfo[2] ($sysinfo[1])\t$time\t_$sysinfo[11]_ ($nr CPU)\n";
+    # print the infomation header.
+    &print_gal_header($nr);
     #printf("\n%-11s  CPU  %%usr %%nice  %%sys %%iowait  %%irq  %%soft %%steal %%guest %%gnice %%idle\n", $tm);
     printf("\n%-11s  CPU    %%usr   %%nice    %%sys %%iowait    %%irq   %%soft  %%steal  %%guest  %%gnice   %%idle\n", &current_time());
     
@@ -329,6 +326,7 @@ sub write_stats_core {
             ($st_cpu[0]->{idle} / $uptime * 100));
 }
 
+# get and format the date string.
 sub current_time {
     my $now = strftime "%H:%M:%S", localtime();
     my ($h, undef, undef) = split(":", $now);
@@ -344,6 +342,7 @@ sub get_bit {
     return ($actflag & $mode);
 }
 
+# deal with the options from the command line.
 sub deal_opt {
     my $opts = shift;
     my $acts = 0;
@@ -385,4 +384,32 @@ sub deal_opt {
     }
 
     return $acts;
+}
+
+# get the size of the terminal.
+sub get_winsize {
+    require 'sys/ioctl.ph';
+    CORE::warn "no TIOCGWINSZ \n" unless defined &TIOCGWINSZ;
+    open(my $tty_fh, "+</dev/tty") or CORE::warn "No tty: $!\n";
+    my $winsize;
+    unless (ioctl($tty_fh, &TIOCGWINSZ, $winsize='')) {
+        CORE::warn sprintf "$script: ioctl TIOCGWINSZ (%08x: $!)\n", &TIOCGWINSZ;
+    }
+    close($tty_fh);
+
+    #my ($col, $row, $xpixel, $ypixel) = unpack('S4', $winsize);
+    my ($row, $col) = unpack('S4', $winsize);
+
+    return ($row, $col);
+}
+
+# print infomation header
+sub print_gal_header {
+    my $nr = shift;
+    my $time = `date +"%m/%d/%Y"`;
+    chomp($time);
+    ### $time
+    my @sysinfo = split(" ", `uname -a`);
+    ### @sysinfo
+    print "$sysinfo[0] $sysinfo[2] ($sysinfo[1])\t$time\t_$sysinfo[11]_ ($nr CPU)\n";
 }
