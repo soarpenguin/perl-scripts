@@ -33,6 +33,9 @@ use constant M_D_IRQ_CPU  => 0b0100;
 use constant M_D_SOFTIRQS => 0b1000;
 
 use constant K_ALL  => "ALL";
+use constant F_P_OPTION => 0b0001;
+use constant F_P_ON => 0b0010;
+
 use constant K_SUM  => "SUM";
 use constant K_CPU  => "CPU";
 use constant K_SCPU => "SCPU";
@@ -47,9 +50,12 @@ $|++;
 getopts("hAI:uP:V", \%opts)
     or die print &usage();
 
+my $nr = &get_cpu_nr();
+### $nr
 ### %opts
 my $actflags = 0;
-$actflags = &deal_opt(\%opts);
+my $flags = 0;
+($actflags, $flags) = &deal_opt(\%opts, $nr);
 ### $actflags
 
 if (@ARGV > 0) {
@@ -70,8 +76,6 @@ sub main {
     my $running = 0;
     my $hz = POSIX::sysconf( &POSIX::_SC_CLK_TCK ) || 100;
 ### $hz
-    my $nr = &get_cpu_nr();
-### $nr
     my $irqcpu_nr = &get_irqcpu_nr($INTERRUPTS, 3);
 ### $irqcpu_nr
     my $softirqcpu_nr = &get_irqcpu_nr($SOFTIRQS, 3);
@@ -345,7 +349,9 @@ sub get_bit {
 # deal with the options from the command line.
 sub deal_opt {
     my $opts = shift;
+    my $nr = shift;
     my $acts = 0;
+    my $flags = 0;
     ### $opts
 
     while (my ($k, $v) = each %$opts) {
@@ -366,6 +372,23 @@ sub deal_opt {
             }
         } elsif ($k =~ /^P$/) {
             # TODO: add -P option 
+            my @array = split(",", $v);
+            foreach my $e (@array) {
+                if ($e == K_ALL) {
+
+                } elsif ($e == K_ON) {
+                    $flags |= F_P_ON;
+                } elsif ($e =~ /^\d+$/) {
+                    if($e >= $nr) {
+                        print "The P option of cpu number is too large.\n";
+                        print &usage();
+                        exit;
+                    }
+                } else {
+                    print &usage();
+                    exit;
+                }
+            }
         } elsif ($k =~ /^A$/) {
             ### $k
             $acts |= M_D_CPU + M_D_IRQ_SUM + M_D_IRQ_CPU + M_D_SOFTIRQS; 
@@ -383,7 +406,7 @@ sub deal_opt {
         }
     }
 
-    return $acts;
+    return ($acts, $flags);
 }
 
 # get the size of the terminal.
