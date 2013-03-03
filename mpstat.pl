@@ -41,11 +41,8 @@ use constant K_CPU  => "CPU";
 use constant K_SCPU => "SCPU";
 use constant K_ON   => "ON";
 
+#---------------------------begin---------------------
 $|++;
-#if(@ARGV < 1) {
-#    print &usage();
-#    exit;
-#}
 
 getopts("hAI:uP:V", \%opts)
     or die print &usage();
@@ -58,7 +55,11 @@ my $flags = 0;
 ($actflags, $flags) = &deal_opt(\%opts, $nr);
 ### $actflags
 
-if (@ARGV > 0) {
+if(@ARGV >= 3) {
+    print "The problem of command line parameters too much!\n";
+    print &usage();
+    exit;
+} elsif (@ARGV > 0) {
     ($interval, $count) = @ARGV;
 }
 
@@ -68,9 +69,10 @@ my $uptime;
 my ($row, $col) = &get_winsize();
 ### $row
 ### $col
-#----------------------main---------------------------
+#------main-------
 &main();
 #print "\n";
+#----------------------end----------------------------
 
 sub main {
     my $running = 0;
@@ -97,8 +99,6 @@ sub main {
 ### $uptime0
     my @st_irq = &read_stat_irq($nr);
 ### @st_irq
-### $interval
-### $count
     # print the infomation header.
     &print_gal_header($nr);
     #printf("\n%-11s  CPU  %%usr %%nice  %%sys %%iowait  %%irq  %%soft %%steal %%guest %%gnice %%idle\n", $tm);
@@ -352,6 +352,7 @@ sub deal_opt {
     my $nr = shift;
     my $acts = 0;
     my $flags = 0;
+    my $cpu_bitmap = 0;
     ### $opts
 
     while (my ($k, $v) = each %$opts) {
@@ -372,18 +373,23 @@ sub deal_opt {
             }
         } elsif ($k =~ /^P$/) {
             # TODO: add -P option 
+            $flags |= F_P_OPTION;
             my @array = split(",", $v);
             foreach my $e (@array) {
-                if ($e == K_ALL) {
-
-                } elsif ($e == K_ON) {
-                    $flags |= F_P_ON;
+                if ($e == K_ALL or $e == K_ON) {
+                    # display all cpu infomation.
+                    $cpu_bitmap |= 2 ** $nr - 1;
+                    if($e == K_ON) {
+                        $flags |= F_P_ON;
+                    }
                 } elsif ($e =~ /^\d+$/) {
                     if($e >= $nr) {
                         print "The P option of cpu number is too large.\n";
                         print &usage();
                         exit;
-                    }
+                    } else {
+                        # TODO: add cpu_bitmap operator 
+                    } 
                 } else {
                     print &usage();
                     exit;
@@ -406,7 +412,7 @@ sub deal_opt {
         }
     }
 
-    return ($acts, $flags);
+    return ($acts, $flags, $cpu_bitmap);
 }
 
 # get the size of the terminal.
