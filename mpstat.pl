@@ -1,9 +1,9 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 #
 
 # mpstat.pl -- mpstat command implemented use perl. {{{1
 #   get infomation from /proc system.
-#   the main file for system info is:
+#   the major file for system info is:
 #    /proc/stat /proc/uptime /proc/meminfo etc.
 #
 # Author:  soarpenguin <soarpenguin@gmail.com>
@@ -41,16 +41,18 @@ use constant K_CPU  => "CPU";
 use constant K_SCPU => "SCPU";
 use constant K_ON   => "ON";
 
+use constant NR_IRQCPU_PREALLOC => 3;
 #---------------------------begin---------------------
 $|++;
 
 getopts("hAI:uP:V", \%opts)
     or die print &usage();
+### %opts
 
 my $nr = &get_cpu_nr();
 ### $nr
-### %opts
 my $actflags = 0;
+my $actset = 0;
 my $flags = 0;
 ($actflags, $flags) = &deal_opt(\%opts, $nr);
 ### $actflags
@@ -63,8 +65,10 @@ if(@ARGV >= 3) {
     ($interval, $count) = @ARGV;
 }
 
-my @st_cpu;
-my $uptime;
+my (@st_cpu, @st_irq);
+my (@st_irqcpu, @st_softirqcpu);
+my ($hz, $irqcpu_nr, $softirqcpu_nr);
+my (@uptime, @uptime0);
 
 my ($row, $col) = &get_winsize();
 ### $row
@@ -75,56 +79,84 @@ my ($row, $col) = &get_winsize();
 #----------------------end----------------------------
 
 sub main {
-    my $running = 0;
-    my $hz = POSIX::sysconf( &POSIX::_SC_CLK_TCK ) || 100;
+    $hz = POSIX::sysconf( &POSIX::_SC_CLK_TCK ) || 100;
 ### $hz
-    my $irqcpu_nr = &get_irqcpu_nr($INTERRUPTS, 3);
+    $irqcpu_nr = &get_irqcpu_nr($INTERRUPTS, NR_IRQCPU_PREALLOC);
 ### $irqcpu_nr
-    my $softirqcpu_nr = &get_irqcpu_nr($SOFTIRQS, 3);
+    $softirqcpu_nr = &get_irqcpu_nr($SOFTIRQS, NR_IRQCPU_PREALLOC);
 ### $softirqcpu_nr
-    my $uptime0 = &read_uptime($hz);
-### $uptime0
-    @st_cpu = &read_stat_cpu($nr);
-### @st_cpu
-    if (! $uptime0 and scalar @st_cpu > 1) {
-        $uptime0 = $st_cpu[1]->{"user"} + $st_cpu[1]->{"nice"} +
-            $st_cpu[1]->{"sys"} + $st_cpu[1]->{"idle"} +
-            $st_cpu[1]->{"iowait"} + $st_cpu[1]->{"hardirq"} +
-            $st_cpu[1]->{"softirq"} + $st_cpu[1]->{"steal"};
-    }
-    $uptime = $st_cpu[0]->{"user"} + $st_cpu[0]->{"nice"} +
-            $st_cpu[0]->{"sys"} + $st_cpu[0]->{"idle"} +
-            $st_cpu[0]->{"iowait"} + $st_cpu[0]->{"hardirq"} +
-            $st_cpu[0]->{"softirq"} + $st_cpu[0]->{"steal"};
-### $uptime0
-    my @st_irq = &read_stat_irq($nr);
-### @st_irq
+    
     # print the infomation header.
     &print_gal_header($nr);
     #printf("\n%-11s  CPU  %%usr %%nice  %%sys %%iowait  %%irq  %%soft %%steal %%guest %%gnice %%idle\n", $tm);
     printf("\n%-11s  CPU    %%usr   %%nice    %%sys %%iowait    %%irq   %%soft  %%steal  %%guest  %%gnice   %%idle\n", &current_time());
     
+    &rw_mpstat_loop($interval, $count); 
+}
+
+sub rw_mpstat_loop {
+    my $interval = shift;
+    my $count = shift;
+    my $running = 0;
+    my $tm_string = &current_time();
+    #print "$now $h\n"; 
+
+    if($nr > 1) {
+        $uptime0[0] = 0;
+        $uptime0[0] = &read_uptime($hz);
+        ### $uptime0
+    }
+    @st_cpu = &read_stat_cpu($nr);
+    ### @st_cpu
+    if (! $uptime0[0] and scalar @st_cpu > 1) {
+        $uptime0[0] = $st_cpu[1]->{"user"} + $st_cpu[1]->{"nice"} +
+            $st_cpu[1]->{"sys"} + $st_cpu[1]->{"idle"} +
+            $st_cpu[1]->{"iowait"} + $st_cpu[1]->{"hardirq"} +
+            $st_cpu[1]->{"softirq"} + $st_cpu[1]->{"steal"};
+    }
+    ### $uptime0[0]
+    $uptime[0] = $st_cpu[0]->{"user"} + $st_cpu[0]->{"nice"} +
+            $st_cpu[0]->{"sys"} + $st_cpu[0]->{"idle"} +
+            $st_cpu[0]->{"iowait"} + $st_cpu[0]->{"hardirq"} +
+            $st_cpu[0]->{"softirq"} + $st_cpu[0]->{"steal"};
+    
+    if(&get_bit($actflags, M_D_IRQ_SUM)) {
+        @st_irq = &read_stat_irq($nr);
+        ### @st_irq
+    }
+
+    if(&get_bit($actflags, M_D_IRQ_SUM) || 
+        &get_bit($actflags, M_D_IRQ_CPU)) {
+        @st_irqcpu = &read_interrupts_stat($INTERRUPTS);
+    }
+
+    if(&get_bit($actflags, M_D_SOFTIRQS)) {
+        @st_softirqcpu = &read_interrupts_stat($SOFTIRQS); 
+    }
+
     if($interval and $interval > 0) {
         $running = -1;
+    } else {
+        &write_stats($tm_string);
+        exit;
     }
 
     do {
-        my $tm_string = &current_time();
-        &write_stats_core($tm_string);
-        #print "$now $h\n"; 
-        
+        if($interval and $interval > 0) {
+            select(undef, undef, undef, $interval);
+            $tm_string = &current_time();
+            $#st_cpu = -1;
+            @st_cpu = &read_stat_cpu($nr);
+            &write_stats($tm_string);
+        }
+
         if($count and $count > 0) { 
             $count--;
             if ($count <= 0) {
                 exit;
             }
         }
-
-        if($interval and $interval > 0) {
-            select(undef, undef, undef, $interval)
-        }
     } while ($running);
-
 }
 
 sub usage {
@@ -308,26 +340,27 @@ sub read_stat_irq {
     return @st_irq;
 }
 
-#sub read_interrupts_stat {
-#    my $SOFTIRQS = "/proc/softirqs";
-#
-#}
+sub read_interrupts_stat {
+    my $file = shift;
 
-sub write_stats_core {
+    return undef;
+}
+
+sub write_stats {
     my $tm = shift;
 
     printf("%-11s  all", &current_time());
     printf("  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f\n",
-            (($st_cpu[0]->{user} - $st_cpu[0]->{guest}) / $uptime * 100),
-            (($st_cpu[0]->{nice} - $st_cpu[0]->{guest_nice}) / $uptime * 100),
-            ($st_cpu[0]->{sys} / $uptime * 100),
-            ($st_cpu[0]->{iowait} / $uptime * 100),
-            ($st_cpu[0]->{hardirq} / $uptime * 100),
-            ($st_cpu[0]->{softirq} / $uptime * 100),
-            ($st_cpu[0]->{steal} / $uptime * 100),
-            ($st_cpu[0]->{guest} / $uptime * 100),
-            ($st_cpu[0]->{guest_nice} / $uptime * 100),
-            ($st_cpu[0]->{idle} / $uptime * 100));
+            (($st_cpu[0]->{user} - $st_cpu[0]->{guest}) / $uptime[0] * 100),
+            (($st_cpu[0]->{nice} - $st_cpu[0]->{guest_nice}) / $uptime[0] * 100),
+            ($st_cpu[0]->{sys} / $uptime[0] * 100),
+            ($st_cpu[0]->{iowait} / $uptime[0] * 100),
+            ($st_cpu[0]->{hardirq} / $uptime[0] * 100),
+            ($st_cpu[0]->{softirq} / $uptime[0] * 100),
+            ($st_cpu[0]->{steal} / $uptime[0] * 100),
+            ($st_cpu[0]->{guest} / $uptime[0] * 100),
+            ($st_cpu[0]->{guest_nice} / $uptime[0] * 100),
+            ($st_cpu[0]->{idle} / $uptime[0] * 100));
 }
 
 # get and format the date string.
@@ -359,6 +392,7 @@ sub deal_opt {
         ### $k
         ### $v
         if($k =~ /^I$/) {
+            $actset = 1;
             if($v == K_SUM) {
                 $acts |= M_D_IRQ_SUM;
             } elsif ($v == K_CPU) {
@@ -372,7 +406,6 @@ sub deal_opt {
                 exit;
             }
         } elsif ($k =~ /^P$/) {
-            # TODO: add -P option 
             $flags |= F_P_OPTION;
             my @array = split(",", $v);
             foreach my $e (@array) {
@@ -389,6 +422,8 @@ sub deal_opt {
                         exit;
                     } else {
                         # TODO: add cpu_bitmap operator 
+                        # Select all processors
+                        # memset(cpu_bitmap, 0xff, ((cpu_nr + 1) >> 3) + 1);
                     } 
                 } else {
                     print &usage();
@@ -396,8 +431,12 @@ sub deal_opt {
                 }
             }
         } elsif ($k =~ /^A$/) {
-            ### $k
+            $actset = 1;
             $acts |= M_D_CPU + M_D_IRQ_SUM + M_D_IRQ_CPU + M_D_SOFTIRQS; 
+            $flags |= F_P_OPTION;
+            # TODO: add cpu_bitmap operator 
+            # Select all processors
+            # memset(cpu_bitmap, 0xff, ((cpu_nr + 1) >> 3) + 1);
         } elsif ($k =~ /^u$/) {
             $acts |= M_D_CPU;
         } elsif ($k =~ /^h/) {
@@ -410,6 +449,14 @@ sub deal_opt {
             print &usage();
             exit;
         }
+    }
+
+    if (!$actset) {
+        $acts |= M_D_CPU;
+    }
+
+    if (!&get_bit($flags, F_P_OPTION)) {
+        $cpu_bitmap = 1;
     }
 
     return ($acts, $flags, $cpu_bitmap);
