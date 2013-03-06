@@ -13,6 +13,7 @@
 use strict;
 use File::Basename;
 use Getopt::Std qw( getopts );
+use Getopt::Long;
 #use Smart::Comments;
 use POSIX ();
 use POSIX qw(strftime);
@@ -45,18 +46,25 @@ use constant NR_IRQCPU_PREALLOC => 3;
 #---------------------------begin---------------------
 $|++;
 
-getopts("hAI:uP:V", \%opts)
+#getopts("hAI:uP:V", \%opts)
+#    or die print &usage();
+GetOptions('help|h' => \$opts{h},
+        'ALL|A'     => \$opts{A},
+        'I=s'       => \$opts{I},
+        'u'         => \$opts{u},
+        'P|p=s'     => \$opts{P},
+        'version|V' => \$opts{V})
     or die print &usage();
-### %opts
+## %opts
 
 my $nr = &get_cpu_nr();
-### $nr
+## $nr
 my $actflags = 0;
 my $actset = 0;
 my $flags = 0;
 my $cpu_bitmap = 0;
 ($actflags, $flags, $cpu_bitmap) = &deal_opt(\%opts, $nr);
-### $actflags
+## $actflags
 
 if(@ARGV >= 3) {
     print "The problem of command line parameters too much!\n";
@@ -73,8 +81,8 @@ my (@uptime, @uptime0, @mp_tstamp);
 my $curr = 1;
 
 my ($row, $col) = &get_winsize();
-### $row
-### $col
+## $row
+## $col
 #------main-------
 &main();
 #print "\n";
@@ -82,11 +90,11 @@ my ($row, $col) = &get_winsize();
 
 sub main {
     $hz = POSIX::sysconf( &POSIX::_SC_CLK_TCK ) || 100;
-### $hz
+## $hz
     $irqcpu_nr = &get_irqcpu_nr($INTERRUPTS, NR_IRQCPU_PREALLOC);
-### $irqcpu_nr
+## $irqcpu_nr
     $softirqcpu_nr = &get_irqcpu_nr($SOFTIRQS, NR_IRQCPU_PREALLOC);
-### $softirqcpu_nr
+## $softirqcpu_nr
     
     $mp_tstamp[0] = localtime();
     # print the infomation header.
@@ -108,9 +116,9 @@ sub rw_mpstat_loop {
         ### @uptime0
     }
     $st_cpu[0] = &read_stat_cpu($nr);
-    ### @st_cpu
+    ## @st_cpu
     #@st_cpu = &read_stat_cpu($nr);
-    ### @st_cpu
+    ## @st_cpu
     #if (! $uptime0[0] and scalar @st_cpu > 1) {
     #    $uptime0[0] = $st_cpu[1]->{"user"} + $st_cpu[1]->{"nice"} +
     #        $st_cpu[1]->{"sys"} + $st_cpu[1]->{"idle"} +
@@ -123,7 +131,7 @@ sub rw_mpstat_loop {
             $st_cpu[0][1]->{"iowait"} + $st_cpu[0][1]->{"hardirq"} +
             $st_cpu[0][1]->{"softirq"} + $st_cpu[0][1]->{"steal"};
     }
-    ### $uptime0[0]
+    ### @uptime0
     #$uptime[0] = $st_cpu[0]->{"user"} + $st_cpu[0]->{"nice"} +
     #        $st_cpu[0]->{"sys"} + $st_cpu[0]->{"idle"} +
     #        $st_cpu[0]->{"iowait"} + $st_cpu[0]->{"hardirq"} +
@@ -132,10 +140,10 @@ sub rw_mpstat_loop {
             $st_cpu[0][0]->{"sys"} + $st_cpu[0][0]->{"idle"} +
             $st_cpu[0][0]->{"iowait"} + $st_cpu[0][0]->{"hardirq"} +
             $st_cpu[0][0]->{"softirq"} + $st_cpu[0][0]->{"steal"};
-    
+    ### @uptime
     if(&get_bit($actflags, M_D_IRQ_SUM)) {
         @st_irq = &read_stat_irq($nr);
-        ### @st_irq
+        ## @st_irq
     }
 
     if(&get_bit($actflags, M_D_IRQ_SUM) || 
@@ -150,17 +158,17 @@ sub rw_mpstat_loop {
     if($interval and $interval > 0) {
         $running = -1;
         $mp_tstamp[2] = $mp_tstamp[0];
-        ### @mp_tstamp
+        ## @mp_tstamp
         $uptime[2] = $uptime[0];
-        ### @uptime
+        ## @uptime
         $uptime0[2] = $uptime0[0];
-        ### @uptime0
+        ## @uptime0
         $st_cpu[2] = $st_cpu[0];
-        ### @st_cpu
+        ## @st_cpu
         $st_irq[2] = $st_irq[0];
-        ### @st_irq
+        ## @st_irq
         $st_irqcpu[2] = $st_irqcpu[0];
-        ### @st_irqcpu
+        ## @st_irqcpu
         if(&get_bit($actflags, M_D_SOFTIRQS)) {
             $st_softirqcpu[2] = $st_softirqcpu[0];
         }
@@ -185,7 +193,7 @@ sub rw_mpstat_loop {
         
         if(&get_bit($actflags, M_D_IRQ_SUM)) {
             @st_irq = &read_stat_irq($nr);
-            ### @st_irq
+            ## @st_irq
         }
 
         if(&get_bit($actflags, M_D_IRQ_SUM) || 
@@ -293,15 +301,15 @@ sub get_irqcpu_nr {
 
 sub read_uptime {
     my $HZ = shift;
-    ### $HZ
+    ## $HZ
     my $UPTIME = "/proc/uptime";
 
     open(my $fd, "<", $UPTIME);
     return 0 unless $fd;
 
     my ($second, $cent) = split(" ", <$fd>);
-    ### $second
-    ### $cent
+    ## $second
+    ## $cent
     close($fd);
 
     return ($second * $HZ + $cent * $HZ / 100); 
@@ -343,7 +351,7 @@ sub read_stat_cpu {
              $st_cpu->{"idle"}, $st_cpu->{"iowait"}, $st_cpu->{"hardirq"},
              $st_cpu->{"softirq"}, $st_cpu->{"steal"}, $st_cpu->{"guest"},
              $st_cpu->{"guest_nice"}) = split(/\s+/, $_);
-            ### $st_cpu
+            ## $st_cpu
             push(@arrays, $st_cpu);
         } elsif ($_ =~ /cpu\d/) {
             # print $_;
@@ -351,7 +359,7 @@ sub read_stat_cpu {
              $st_cpu->{"idle"}, $st_cpu->{"iowait"}, $st_cpu->{"hardirq"},
              $st_cpu->{"softirq"}, $st_cpu->{"steal"}, $st_cpu->{"guest"},
              $st_cpu->{"guest_nice"}) = split(/\s+/, $_);
-            ### $st_cpu
+            ## $st_cpu
             push(@arrays, $st_cpu);
         } else {
             last;
@@ -413,11 +421,11 @@ sub write_stats {
 }
 
 sub write_stats_core {
-    my $g_itv = &get_interval(0);
+    my $g_itv = &get_interval(1, !$curr, $curr);
     my $itv = $g_itv;
 
     if($nr > 1) {
-        $itv = &get_interval(1);
+        $itv = &get_interval(0, !$curr, $curr);
     }
 
     # Print CPU stats
@@ -426,17 +434,67 @@ sub write_stats_core {
             printf("%-11s  all", &fmt_time($mp_tstamp[$curr]));
 
             printf("  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f\n",
-                (($st_cpu[0][0]->{user} - $st_cpu[0][0]->{guest}) / $uptime[0] * 100),
-                (($st_cpu[0][0]->{nice} - $st_cpu[0][0]->{guest_nice}) / $uptime[0] * 100),
-                ($st_cpu[0][0]->{sys} / $uptime[0] * 100),
-                ($st_cpu[0][0]->{iowait} / $uptime[0] * 100),
-                ($st_cpu[0][0]->{hardirq} / $uptime[0] * 100),
-                ($st_cpu[0][0]->{softirq} / $uptime[0] * 100),
-                ($st_cpu[0][0]->{steal} / $uptime[0] * 100),
-                ($st_cpu[0][0]->{guest} / $uptime[0] * 100),
-                ($st_cpu[0][0]->{guest_nice} / $uptime[0] * 100),
-                ($st_cpu[0][0]->{idle} / $uptime[0] * 100));
+                ($st_cpu[$curr][0]->{user} - $st_cpu[$curr][0]->{guest}) <
+                ($st_cpu[!$curr][0]->{user} - $st_cpu[!$curr][0]->{guest}) ?
+                 0.0 :
+                &ll_sp_value(($st_cpu[!$curr][0]->{user} - $st_cpu[!$curr][0]->{guest}),
+                    ($st_cpu[$curr][0]->{user} - $st_cpu[$curr][0]->{guest}), 
+                    $g_itv),
 
+                ($st_cpu[$curr][0]->{nice} - $st_cpu[$curr][0]->{guest_nice}) <
+                ($st_cpu[!$curr][0]->{nice} - $st_cpu[!$curr][0]->{guest_nice}) ?
+                 0.0 :
+                &ll_sp_value(($st_cpu[!$curr][0]->{nice} - $st_cpu[!$curr][0]->{guest_nice}),
+                    ($st_cpu[$curr][0]->{nice} - $st_cpu[$curr][0]->{guest_nice}),
+                    $g_itv),
+                &ll_sp_value($st_cpu[$curr][0]->{sys},
+                    $st_cpu[!$curr][0]->{sys},
+                    $g_itv),
+                &ll_sp_value($st_cpu[$curr][0]->{iowait},
+                    $st_cpu[!$curr][0]->{iowait},
+                    $g_itv),
+                &ll_sp_value($st_cpu[$curr][0]->{hardirq},
+                    $st_cpu[!$curr][0]->{hardirq},
+                    $g_itv),
+                &ll_sp_value($st_cpu[$curr][0]->{softirq},
+                    $st_cpu[!$curr][0]->{softirq},
+                    $g_itv),
+                &ll_sp_value($st_cpu[$curr][0]->{steal},
+                    $st_cpu[!$curr][0]->{steal},
+                    $g_itv),
+                &ll_sp_value($st_cpu[$curr][0]->{guest},
+                    $st_cpu[!$curr][0]->{guest},
+                    $g_itv),
+                &ll_sp_value($st_cpu[$curr][0]->{guest_nice},
+                    $st_cpu[!$curr][0]->{guest_nice},
+                    $g_itv),
+                ($st_cpu[$curr][0]->{idle} < $st_cpu[!$curr][0]->{idle}) ?
+                 0.0 :
+                &ll_sp_value($st_cpu[$curr][0]->{idle},
+                    $st_cpu[!$curr][0]->{idle},
+                    $g_itv));
+        }
+
+        for(my $i = 1; $i <= $nr; $i++) {
+			
+            # TODO: Check if we want stats about this proc */
+			#if (!(*(cpu_bitmap + (cpu >> 3)) & (1 << (cpu & 0x07))))
+            #	continue;
+
+            if(($st_cpu[$curr][$i]->{user} + $st_cpu[$curr][$i]->{nice} +
+                $st_cpu[$curr][$i]->{sys} + $st_cpu[$curr][$i]->{iowait} +
+                $st_cpu[$curr][$i]->{idle} + $st_cpu[$curr][$i]->{steal} +
+                $st_cpu[$curr][$i]->{hardirq} + $st_cpu[$curr][$i]->{softirq}) == 0) {
+                
+                if(!&get_bit($flags, F_P_ON)) {
+					printf("%-11s %4d  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.2f\n",
+					       &fmt_time($mp_tstamp[$curr]), $i - 1,
+					       0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+                }
+                next;
+            }
+
+			printf("%-11s %4d", &fmt_time($mp_tstamp[$curr]), $i - 1);
         }
     }
     
@@ -483,65 +541,76 @@ sub deal_opt {
     my $acts = 0;
     my $flags = 0;
     my $cpu_bitmap = 0;
-    ### $opts
 
     while (my ($k, $v) = each %$opts) {
-        ### $k
-        ### $v
+        ## $k
+        ## $v
         if($k =~ /^I$/) {
-            $actset = 1;
-            if($v == K_SUM) {
-                $acts |= M_D_IRQ_SUM;
-            } elsif ($v == K_CPU) {
-                $acts |= M_D_IRQ_CPU;
-            } elsif ($v == K_SCPU) {
-                $acts |= M_D_SOFTIRQS;
-            } elsif ($v == K_ALL) {
-                $acts |= M_D_IRQ_SUM + M_D_IRQ_CPU + M_D_SOFTIRQS;
-            } else {
-                print &usage();
-                exit;
-            }
-        } elsif ($k =~ /^P$/) {
-            $flags |= F_P_OPTION;
-            my @array = split(",", $v);
-            foreach my $e (@array) {
-                if ($e == K_ALL or $e == K_ON) {
-                    # display all cpu infomation.
-                    $cpu_bitmap |= 2 ** $nr - 1;
-                    if($e == K_ON) {
-                        $flags |= F_P_ON;
-                    }
-                } elsif ($e =~ /^\d+$/) {
-                    if($e >= $nr) {
-                        print "The P option of cpu number is too large.\n";
-                        print &usage();
-                        exit;
-                    } else {
-                        # TODO: add cpu_bitmap operator 
-                        # Select all processors
-                        # memset(cpu_bitmap, 0xff, ((cpu_nr + 1) >> 3) + 1);
-                    } 
+            if($v) {
+                $actset = 1;
+                if($v == K_SUM) {
+                    $acts |= M_D_IRQ_SUM;
+                } elsif ($v == K_CPU) {
+                    $acts |= M_D_IRQ_CPU;
+                } elsif ($v == K_SCPU) {
+                    $acts |= M_D_SOFTIRQS;
+                } elsif ($v == K_ALL) {
+                    $acts |= M_D_IRQ_SUM + M_D_IRQ_CPU + M_D_SOFTIRQS;
                 } else {
                     print &usage();
                     exit;
                 }
             }
+        } elsif ($k =~ /^P$/) {
+            if($v) {
+                $flags |= F_P_OPTION;
+                my @array = split(",", $v);
+                foreach my $e (@array) {
+                    if ($e == K_ALL or $e == K_ON) {
+                        # display all cpu infomation.
+                        $cpu_bitmap |= 2 ** $nr - 1;
+                        if($e == K_ON) {
+                            $flags |= F_P_ON;
+                        }
+                    } elsif ($e =~ /^\d+$/) {
+                        if($e >= $nr) {
+                            print "The P option of cpu number is too large.\n";
+                            print &usage();
+                            exit;
+                        } else {
+                            # TODO: add cpu_bitmap operator 
+                            # Select all processors
+                            # memset(cpu_bitmap, 0xff, ((cpu_nr + 1) >> 3) + 1);
+                        } 
+                    } else {
+                        print &usage();
+                        exit;
+                    }
+                }
+            }
         } elsif ($k =~ /^A$/) {
-            $actset = 1;
-            $acts |= M_D_CPU + M_D_IRQ_SUM + M_D_IRQ_CPU + M_D_SOFTIRQS; 
-            $flags |= F_P_OPTION;
-            # TODO: add cpu_bitmap operator 
-            # Select all processors
-            # memset(cpu_bitmap, 0xff, ((cpu_nr + 1) >> 3) + 1);
+            if($v) {
+                $actset = 1;
+                $acts |= M_D_CPU + M_D_IRQ_SUM + M_D_IRQ_CPU + M_D_SOFTIRQS; 
+                $flags |= F_P_OPTION;
+                # TODO: add cpu_bitmap operator 
+                # Select all processors
+                # memset(cpu_bitmap, 0xff, ((cpu_nr + 1) >> 3) + 1);
+            }
         } elsif ($k =~ /^u$/) {
-            $acts |= M_D_CPU;
+            if($v) {
+                $acts |= M_D_CPU;
+            }
         } elsif ($k =~ /^h/) {
-            print &usage();
-            exit;
+            if($v) {
+                print &usage();
+                exit;
+            }
         } elsif ($k =~ /^V/) {
-            &version($script, $version);
-            exit;
+            if($v) {
+                &version($script, $version);
+                exit;
+            }
         } else {
             print &usage();
             exit;
@@ -581,8 +650,35 @@ sub print_gal_header {
     my $nr = shift;
     my $time = `date +"%m/%d/%Y"`;
     chomp($time);
-    ### $time
+    ## $time
     my @sysinfo = split(" ", `uname -a`);
-    ### @sysinfo
+    ## @sysinfo
     print "$sysinfo[0] $sysinfo[2] ($sysinfo[1])\t$time\t_$sysinfo[11]_ ($nr CPU)\n";
+}
+
+sub get_interval {
+    my ($bool, $prev, $curr) = @_;
+    my $itv;
+
+    if($bool) {
+        $itv = $uptime[$curr] - $uptime[$prev];
+        if($itv) {
+            return $itv;
+        } else {
+            return 1;
+        }
+    } else {
+        $itv = $uptime0[$curr] - $uptime0[$prev];
+        if($itv) {
+            return $itv;
+        } else {
+            return 1;
+        }
+    }
+}
+
+sub ll_sp_value {
+    my ($value1, $value2, $itv) = @_;
+
+    return ($value2 - $value1) / $itv * 100;
 }
