@@ -119,7 +119,7 @@ if($col < 80) {
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # function for signal action
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-sub catch_int {
+sub stop {
     my $signame = shift;
     &gotoxy($row + $header_row, 0);
     print color("red"), "Stoped by SIG$signame\n", color("reset");
@@ -127,13 +127,30 @@ sub catch_int {
     # &echo();
     exit;
 }
+
+sub suspend {
+    # TODO: add suspend code.
+}
+
 BEGIN {
-    $SIG{INT} = __PACKAGE__ . "::catch_int";
-    $SIG{INT} = \&catch_int; # best strategy
-    $SIG{QUIT} = __PACKAGE__ . "::catch_int";
-    $SIG{QUIT} = \&catch_int;
-    $SIG{TERM} = __PACKAGE__ . "::catch_int";
-    $SIG{TERM} = \&catch_int; # best strategy
+    $SIG{ALRM} = __PACKAGE__ . "::stop";
+    $SIG{ALRM} = \&stop; # best strategy
+    $SIG{HUP} = __PACKAGE__ . "::stop";
+    $SIG{HUP} = \&stop; # best strategy
+    $SIG{INT} = __PACKAGE__ . "::stop";
+    $SIG{INT} = \&stop; # best strategy
+    $SIG{PIPE} = __PACKAGE__ . "::stop";
+    $SIG{PIPE} = \&stop; # best strategy
+    $SIG{QUIT} = __PACKAGE__ . "::stop";
+    $SIG{QUIT} = \&stop;
+    $SIG{TERM} = __PACKAGE__ . "::stop";
+    $SIG{TERM} = \&stop; # best strategy
+    $SIG{TSTP} = __PACKAGE__ . "::suspend";
+    $SIG{TSTP} = \&suspend; # best strategy
+    $SIG{TTIN} = __PACKAGE__ . "::suspend";
+    $SIG{TTIN} = \&suspend; # best strategy
+    $SIG{TTOU} = __PACKAGE__ . "::suspend";
+    $SIG{TTOU} = \&suspend; # best strategy
 }
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -143,6 +160,7 @@ my @files;
 my $dh;
 my %savecpu;
 my $first = 0;
+my $rin = '';
 
 my @cpuinfo = &get_cpu_info();
 ## @cpuinfo
@@ -466,6 +484,7 @@ START:
 #----------------- get infomation of cpu ---------------------------------
     $#cpuinfo=-1;
     @cpuinfo = &get_cpu_info();
+    ## @cpuinfo
     my ($u, $n, $s, $i, $w) = (
         $cpuinfo[0]->{"u"} - $cpuhash{"u"},
         $cpuinfo[0]->{"s"} - $cpuhash{"s"},
@@ -536,14 +555,18 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
         # last;
         $count++;
     }
-    &readyforinterface();
+    #&readyforinterface();
    
     #---------- for -n or --number option-----------
     if($numbers > 0) { $numbers--; } 
     if(! $numbers) { exit; }
 
     $count = 0;
-    select(undef, undef, undef, $delay);
+    vec($rin, fileno(STDIN), 1) = 1;
+    if(select($rin, undef, undef, $delay) > 0 &&
+       &chin(\$char,1) > 0) {
+        &dokey($char);
+    }
 
 } while (1);
 
@@ -943,6 +966,10 @@ sub dokey {
         &clrscr();
         &printhelp();
     }
+}
+
+sub chin {
+    my $char = shift;
 }
 
 sub printhelp {
