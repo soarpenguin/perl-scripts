@@ -540,14 +540,14 @@ Swap: %8dk total, %8dk used, %8dk free, %8dk cached\n",
     while($count < $row) {
         #$process[$count]->{"vsize"} = ($process[$count]->{"vsize"})/1024; 
         &clreol();
-        printf("%5s %-8s %3s %3s %5s %4s %4s %1s %4d %4.1f %9s %-15s\n", 
+        printf("%5s %-8s %3s %3s %5s %4s %4s %1s %4.1f %4.1f %9s %-15s\n", 
                 $process[$count]->{"pid"}, $process[$count]->{"euser"},
                 $process[$count]->{"priority"}, $process[$count]->{"nice"},
                 &scale_num($process[$count]->{"size"}, 5, $pagesize), 
                 &scale_num($process[$count]->{"resident"}, 4, $pagesize),
                 &fmtShare($process[$count]->{"share"}, $pagesize), 
                 $process[$count]->{"state"},
-                int($process[$count]->{"pcpu"}) / 3, 
+                $process[$count]->{"pcpu"} / 3.0, 
                 &fmtMemPercent($process[$count]->{"resident"}, $memtotal, $pagesize),
                 &scale_tics($process[$count]->{"utime"}+$process[$count]->{"stime"}, 8, $Hertz), 
                 $process[$count]->{"cmd"}
@@ -1009,3 +1009,35 @@ sub echo {
     print `stty sane`
 }
 
+sub mk_fd_nonblocking {
+    use Fcntl qw(F_GETFL F_SETFL O_NONBLOCK);
+
+    my $fd = shift;
+    my $flags = fcntl($fd, F_GETFL, 0)
+        or warn "Can't get flags for the fd: $!\n";
+
+    $flags = fcntl($fd, F_SETFL, $flags | O_NONBLOCK)
+        or warn "Can't set flags for the fd: $!\n";
+}
+
+#-------------------terminal operator-------------------
+#my $savedtty;
+#use POSIX::1003::Termios;
+#
+#sub whack_terminal {
+#    my $newtty;
+#
+#    $savedtty = POSIX::1003::Termios->new;
+#    $savedtty->getattr(STDIN_FILENO);
+#
+#    $newtty = POSIX::1003::Termios->new;
+#    my $c_lflag = $newtty->getlflag();
+#
+#    $c_lflag &= ~ICANON;
+#    $c_lflag &= ~ECHO;
+#
+#    $newtty->setlflag($c_lflag);
+#    $newtty->tcsetattr(STDIN_FILENO, TCSAFLUSH);
+#
+#    fflush(stdout);
+#}
