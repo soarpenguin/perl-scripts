@@ -909,7 +909,7 @@ sub clreol {
 # Esc[2K            - Erases the entire current line.
 #define delline()             puts ("\e[2K")
 sub delline {
-    print "\e{2K";
+    print "\e[2K";
 }
 
 # Esc[Line;ColumnH    - Moves the cursor to the specified position (coordinates)
