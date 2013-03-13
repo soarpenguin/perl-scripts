@@ -1,9 +1,24 @@
 #!/bin/bash
 
+AUTO_INVOKE_SUDO=yes
+
+function invoke_sudo() 
+{
+    if [ "`id -u`" != "`id -u $1`" ]; then
+        echo "`whoami`:you need to be $1 privilege to run this script.";
+        if [ "$AUTO_INVOKE_SUDO" == "yes" ]; then 
+            echo "Invoking sudo ...";
+            sudo -u "#`id -u $1`" bash -c "$2";
+        fi
+        exit 0;
+    fi
+}
+
 uid=`id -u`
 if [ $uid -ne '0' ]; then 
-   echo "Must running in root privilege.";
-   exit
+  # echo "Must running in root privilege.";
+  # exit
+  invoke_sudo root "$0 $@"
 fi
 #------------------------------------------------------------------------------
 # Prerequisites
