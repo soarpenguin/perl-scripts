@@ -6,6 +6,7 @@ vim
 gvim
 autoconf
 automake
+libtool
 ctags
 cscope
 git
@@ -43,3 +44,4 @@ glibc
 glibc-common
 
 xclip
+strace

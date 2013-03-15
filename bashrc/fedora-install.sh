@@ -50,6 +50,7 @@ yum -y install vim
 yum -y install gvim
 yum -y install autoconf
 yum -y install automake
+yum -y install libtool
 yum -y install ddd
 yum -y install valgrind
 yum -y install ctags
