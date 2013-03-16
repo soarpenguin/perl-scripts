@@ -10,6 +10,9 @@ set fencs=utf-8,usc-bom,euc-jp,gb18030,gbk,gb2312,cp936
 set guifont=Nimbus\ Mono\ L\ Regular\ Oblique\ 10
 colorscheme evening
 
+let mapleader=","
+let g:mapleader=","
+
 " 不要使用vi的键盘模式，而是vim自己的
 set nocompatible
 
@@ -353,12 +356,29 @@ function UpdateCtags()
         endif
     endwhile
     if filewritable("./tags")
-        !ctags -R
+        :!ctags -R
+    endif
+    execute ":cd " . curdir
+endfunction
+
+function UpdateCStags()
+    let curdir=getcwd()
+    while !filereadable("./cscope.out")
+        cd ..
+        if getcwd() == "/"
+            break
+        endif
+    endwhile
+    if filewritable("./cscope.out")
+        :!cscope -Rbq
+        execute ":cscope kill 0"
+        execute ":cscope add cscope.out"
     endif
     execute ":cd " . curdir
 endfunction
 
 nmap <F8> :call UpdateCtags()<CR>
+nmap <F9> :call UpdateCStags()<CR>
 
 "---------------------------------------------------------------
 "set ident level
@@ -396,3 +416,8 @@ set langmenu=en_US
 let $LANG='en_US'
 source $VIMRUNTIME/delmenu.vim
 source $VIMRUNTIME/menu.vim
+
+"add () [] or {} for a word, like:{word}
+:map \9 bi(<Esc>ea)<Esc>
+:map \[ bi[<Esc>ea]<Esc>
+:map \{ bi{<Esc>ea}<Esc>
