@@ -4,7 +4,15 @@ use strict;
 use Term::ANSIColor;
 
 if(-e "_vimrc") {
-    `cat _vimrc >> ~/.vimrc`;
+    #`cat _vimrc >> ~/.vimrc`;
+    `cp -b _vimrc ~/.vimrc`;
+    if($? != 0) {
+        print color("red");
+        print "cp -b _vimrc ~/.vimrc is failed!\n";
+        print color("reset");
+    } else {
+        print "cp -b _vimrc ~/.vimrc is success!\n";
+    }
 } else {
     print color("red");
     print "_vimrc is not exists!\n";
@@ -12,7 +20,15 @@ if(-e "_vimrc") {
 }
 
 if(-e "_bash_history") {
-    `cat _bash_history >> ~/.bash_history`;
+    #`cat _bash_history >> ~/.bash_history`;
+    `cp -u _bash_history ~/.bash_history`;
+    if($? != 0) {
+        print color("red");
+        print "cp -u _bash_history ~/.bash_history is failed!\n";
+        print color("reset");
+    } else {
+        print "cp -u _bash_history ~/.bash_history is success!\n";
+    }
 } else {
     print color("red");
     print "_bash_history is not exists!\n";
@@ -20,10 +36,33 @@ if(-e "_bash_history") {
 }
 
 if(-e "_bashrc") {
-    `cat _bashrc >> ~/.bashrc`;
+    #`cat _bashrc >> ~/.bashrc`;
+    `cp -b _bashrc ~/.bashrc`;
+    if($? != 0) {
+        print color("red");
+        print "cp -b _bashrc/* ~/.bashrc is failed!\n";
+        print color("reset");
+    } else {
+        print "cp -b _bashrc/* ~/.bashrc is success!\n";
+    }
 } else {
     print color("red");
     print "_bashrc is not exists!\n";
+    print color("reset");
+}
+
+if(-e "_vim") {
+    `cp -ur _vim/* ~/.vim/`;
+    if($? != 0) {
+        print color("red");
+        print "cp -ur _vim/* ~/.vim/ is failed!\n";
+        print color("reset");
+    } else {
+        print "cp -ur _vim/* ~/.vim/ is success!\n";
+    }
+} else {
+    print color("red");
+    print "_vim/ is not exists!\n";
     print color("reset");
 }
 
@@ -34,10 +73,10 @@ if($ret =~ "/bin/git") {
      git config --global alias.st "status";
      git config --global alias.cfg "config";
      git config --global alias.cfgl "config --list";
+     git config --global alias.rhead "reset HEAD";
     `
 } else {
     print color("red");
     print "please installed git first!\n";
     print color("reset");
 }
-
