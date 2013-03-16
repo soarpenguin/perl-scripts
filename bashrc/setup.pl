@@ -74,6 +74,9 @@ if($ret =~ "/bin/git") {
      git config --global alias.cfg "config";
      git config --global alias.cfgl "config --list";
      git config --global alias.rhead "reset HEAD";
+     git config --global gui.encoding utf-8
+     git config --global i18n.commitencoding utf-8
+     git config --global i18n.logoutputencoding gbk
     `
 } else {
     print color("red");
