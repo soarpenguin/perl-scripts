@@ -89,7 +89,7 @@ if(! -e $proc) {
 if(!$delay) {
     $delay = 3;
 } elsif($delay < 0) {
-    $delay *= -1;
+    $delay = -$delay;
 }
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1002,11 +1002,11 @@ any other key to continue ");
 }
 
 sub noecho {
-    print `stty -echo`
+    print `stty -echo`;
 }
 
 sub echo {
-    print `stty sane`
+    print `stty sane`;
 }
 
 sub mk_fd_nonblocking {
