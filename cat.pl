@@ -31,12 +31,12 @@ Usage: $script [option]... [file]...
 ";
 
 GetOptions(
-	'number|n!' => \$number,  #the '!' means can use --[no]number disable -n option
+	'number|n!'   => \$number,  #the '!' means can use --[no]number disable -n option
 	'show-ends|E' => \$end,
 	'show-tabs|T' => \$tab,
-	'help|h'	=> \$help,
-	'version|v' => \$version,
-	'debug|d'	=> \$debug  # use for debug, turn on Smart::Comments;
+	'help|h'      => \$help,
+	'version|v'   => \$version,
+	'debug|d'     => \$debug  # use for debug, turn on Smart::Comments;
 );
 
 if($debug) {
