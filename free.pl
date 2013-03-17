@@ -72,16 +72,16 @@ Usage: $script [-b|-k|-m|-g] [-c count] [-l] [-o] [-t] [-s delay] [-V]
 ";
 
 my $ret = GetOptions( 
-	'byte|b'	=> \$byte,
-	'k|KB'		=> \$kb,
-	'm|MB'		=> \$mb,
-	'g|GB'		=> \$gb,
-	'c=i'		=> \$count,
-	's=f'		=> \$sleep,
-	't'			=> \$total,
-	'o'			=> \$oldfmt,
-	'l'			=> \$lhdetail,
-	'help|h|?'	=> \&usage,  #point to the usage();
+	'byte|b'    => \$byte,
+	'k|KB'      => \$kb,
+	'm|MB'      => \$mb,
+	'g|GB'      => \$gb,
+	'c=i'       => \$count,
+	's=f'       => \$sleep,
+	't'         => \$total,
+	'o'         => \$oldfmt,
+	'l'         => \$lhdetail,
+	'help|h|?'  => \&usage,  #point to the usage();
 	'version|V' => \&version
 );
 
@@ -123,7 +123,7 @@ if($byte) {
 if($count and $sleep) {
     $countflag = 1;
     if($count < 0) {
-        $count = $count * -1;
+        $count = -$count;
     }
 } elsif ($sleep) {
     $countflag = 0;
@@ -137,7 +137,7 @@ if($count and $sleep) {
 ### $sleep
 ### $count;
 ### $countflag;
-
+$| = 1;
 do {
 
     open($fd, "<", $meminfo);
@@ -230,7 +230,6 @@ do {
         $swapfree = &sizeshift($swapfree, $byteshift);
     }
 
-    $| = 1;
     print color("blue"); # use blue color for infomation head.
     printf("%18s %10s %10s %10s %10s %10s\n", "total", "used", 
         "free", "shared", "buffers", "cached");
