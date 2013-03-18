@@ -9,11 +9,16 @@ my $index = 0;
 my $linenum = 1;
 my $script = basename $0;
 my $debug = 0;
-my ( $number, $tab, $end, $help, $version );
+my ( $all, $number, $tab, $end, $help, $version );
 my $myversion = "0.1.0";
 
 my $Usage = " 
-Usage: $script [option]... [file]... 
+Usage: $script [option]... [file]...
+Concatenate FILE(s), or standard input, to standard output.
+
+       -A, --show-all
+              equivalent to -ET
+
        -n, --[no]number
               number all output lines or disable with [nonumber]
 
@@ -31,12 +36,13 @@ Usage: $script [option]... [file]...
 ";
 
 GetOptions(
-	'number|n!'   => \$number,  #the '!' means can use --[no]number disable -n option
-	'show-ends|E' => \$end,
-	'show-tabs|T' => \$tab,
-	'help|h'      => \$help,
-	'version|v'   => \$version,
-	'debug|d'     => \$debug  # use for debug, turn on Smart::Comments;
+    'show-all|A'  => \$all,
+    'number|n!'   => \$number,  #the '!' means can use --[no]number disable -n option
+    'show-ends|E' => \$end,
+    'show-tabs|T' => \$tab,
+    'help|h'      => \$help,
+    'version|v'   => \$version,
+    'debug|d'     => \$debug  # use for debug, turn on Smart::Comments;
 );
 
 if($debug) {
@@ -52,34 +58,30 @@ if($help or $version) {
 	&usage();
 }
 
+if($all) {
+    $end = 1;
+    $tab = 1;
+}
+
 while(my $line = <>)
 {
 	if($number) {
 		printf ("%6d  ", $linenum++);
-		if($tab) {
-			$line =~ s/\t/\^I/sg;
-			if($end) {
-				$line =~ s/(\n|\n\r)/\$$1/;
-			}
-		}
-		print $line;
-		if(eof) {
-			print("--------end of $files[$index] file--------\n");
-			$index += 1;
-		}
-	} else {
-		if($tab) {
-			$line =~ s/\t/\^I/sg;
-			if($end) {
-				$line =~ s/(\n|\n\r)/\$$1/;
-			}
-		}
-		print $line;
-		if(eof) {
-			print("--------end of $files[$index] file--------\n");
-			$index += 1;
-		}
 	}
+    
+    if($tab) {
+        $line =~ s/\t/\^I/sg;
+    }
+
+    if($end) {
+        $line =~ s/(\n|\n\r)/\$$1/;
+    }
+
+    print $line;
+    if(eof) {
+        print("--------end of $files[$index] file--------\n");
+        $index += 1;
+    }
 }
 
 sub usage {
