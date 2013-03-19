@@ -33,6 +33,7 @@ Mandatory arguments to long options are mandatory for short options too.
   -a, --all                  do not ignore entries starting with .
   -o                         like -l, but do not list group information
   -1                         list one file per line
+  -n, --numeric-uid-gid      like -l, but list numeric user and group IDs
   -r, --reverse              reverse order while sorting
       --help     display this help and exit
       --version  output version information and exit
@@ -50,10 +51,11 @@ Exit status:
  1  if minor problems (e.g., cannot access subdirectory),
  2  if serious trouble (e.g., cannot access command-line argument).
 ";
-my ($all, $list, $reverse, $nogid); 
+my ($all, $list, $reverse, $nogid, $numeric_uid_gid); 
 
 my $ret = GetOptions( 
     'l'         => \$list,
+    'n|numeric-uid-gid' => \$numeric_uid_gid,
     'all'       => \$all,
     'o'         => \$nogid,
     'reverse|r' => \$reverse,
@@ -72,6 +74,10 @@ if(! $ret) {
 sub main {
     if (@ARGV == 0) {
         $ARGV[0] = getcwd();
+    }
+
+    if($numeric_uid_gid) {
+        $list = 1;
     }
 
     foreach my $myfile (@ARGV) {
@@ -113,8 +119,10 @@ sub listfile {
     my $type = &filetype($file);
 
     $right = &right_string($right);
-    $uid   = getpwuid($uid); #from user id to user name.
-    $gid   = getgrgid($gid); #from group id to group name.
+    if(! $numeric_uid_gid) {
+        $uid   = getpwuid($uid); #from user id to user name.
+        $gid   = getgrgid($gid); #from group id to group name.
+    }
 
     # the format of below: Sun Nov 11 14:18:02 2012
     # $ctime = strftime "%a %b %e %H:%M:%S %Y", localtime($info[10]);
@@ -166,8 +174,10 @@ sub listdir {
             my $type = &filetype($file);
 
             $right = &right_string($right);
-            $uid   = getpwuid($uid); #from user id to user name.
-            $gid   = getgrgid($gid); #from group id to group name.
+            if(! $numeric_uid_gid) {
+                $uid   = getpwuid($uid); #from user id to user name.
+                $gid   = getgrgid($gid); #from group id to group name.
+            }
 
             # the format of below: Sun Nov 11 14:18:02 2012
             # $ctime = strftime "%a %b %e %H:%M:%S %Y", localtime($info[10]);
