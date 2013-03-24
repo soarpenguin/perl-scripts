@@ -22,7 +22,7 @@ use Term::ANSIColor;
 #print color("green"), "Go!\n", color("reset");
 
 my $script = basename $0;
-my $myversion = '0.1.0';
+my $myversion = '0.2.0';
 
 
 my $usage = "
@@ -39,6 +39,11 @@ Usage: $script [option]... <files/dirs>
        -o <file>, --output <file>
             Place the output into <file>. 
 
+       -u   Display the filename first and then the match line. 
+            Default is disable. Form like:
+            -------------[filename]-------------
+            [tag] [lineno] [content]
+
        -h, --help 
             Display this help and exit
 
@@ -50,74 +55,79 @@ if ($^O ne 'linux') {
     die "Only linux is supported but I am on $^O.\n";
 }
 
-my ($tag, $exts, $output, $ret); 
+&main();
 
-$ret = GetOptions( 
-    'tags|t=s'  => \$tag,
-    'exts|e=s'  => \$exts,
-    'output|o=s'=> \$output,
-    'help'	    => \&usage,
-    'version|V' => \&version
-);
+sub main {
+    my ($tag, $exts, $output, $unite, $ret); 
+    $unite = 0;
 
-if(! $ret) {
-    &usage();
-}
+    $ret = GetOptions( 
+        'tags|t=s'  => \$tag,
+        'exts|e=s'  => \$exts,
+        'output|o=s'=> \$output,
+        'help'	    => \&usage,
+        'unite|u'   => \$unite,
+        'version|V' => \&version
+    );
 
-my @tags = ();
-if(! $tag) {
-    &myprint("A tag must be specified.");
-    &usage();
-} else {
-    @tags = split(",", $tag);
-}
-### @tags
+    if(! $ret) {
+        &usage();
+    }
 
-my @extents = ();
-if(! $exts) {
-    print("Search for all text file.\n");
-} else {
-    @extents = split(",", $exts);
-}
-### @extents
+    my @tags = ();
+    if(! $tag) {
+        &myprint("A tag must be specified.");
+        &usage();
+    } else {
+        @tags = split(",", $tag);
+    }
+    ### @tags
 
-##--------start search the files----------------------
-#
-my @files = sort by_code @ARGV;
-my @failed;
+    my @extents = ();
+    if(! $exts) {
+        print("Search for all text file.\n");
+    } else {
+        @extents = split(",", $exts);
+    }
+    ### @extents
 
-if($output) {
-    open(STDOUT, ">$output") || print("Redirect stdout failed.\n");
-}
-## @files
-foreach my $file (@files) {
-    if(-e $file) {
-        if(-f _) {
-            if(scalar @extents >= 1) {
-                foreach my $ext (@extents) {
-                    if($file =~ /(\.(\w+))$/) {
-                        if($1 eq $ext) {
-                            &scan_file($file, @tags);
+    ##--------start search the files----------------------
+    #
+    my @files = sort by_code @ARGV;
+    my @failed;
+    if($output) {
+        open(STDOUT, ">$output") || print("Redirect stdout failed.\n");
+    }
+    ## @files
+    foreach my $file (@files) {
+        if(-e $file) {
+            if(-f _) {
+                if(scalar @extents >= 1) {
+                    foreach my $ext (@extents) {
+                        if($file =~ /(\.(\w+))$/) {
+                            if($1 eq $ext) {
+                                &scan_file($file, $unite, @tags);
+                            }
                         }
                     }
+                } else {
+                    &scan_file($file, $unite, @tags);
                 }
+            } elsif (-d _) {
+                my @subfiles = &scan_folder($file);
+                push(@files, @subfiles);
             } else {
-                &scan_file($file, @tags);
+                push(@failed, $file);
             }
-        } elsif (-d _) {
-            my @subfiles = &scan_folder($file);
-            push(@files, @subfiles);
         } else {
             push(@failed, $file);
         }
-    } else {
-        push(@failed, $file);
+        #my @tmp = &scan_folder($file);
+        ## @tmp
     }
-    #my @tmp = &scan_folder($file);
-    ## @tmp
+    ## @failed
+    close(STDOUT);
 }
-## @failed
-close(STDOUT);
 #-----------------------------------------------------
 #
 sub usage {
@@ -144,13 +154,16 @@ sub myprint {
 }
 
 sub scan_file {
-    my ($filename, $tags, $fd);
+    my ($filename, $fd, $unite, $found);
     $filename = shift;
+    $unite = shift;
+    $found = 0;
     ## $filename
     ## @_
 
     open($fd, "<", "$filename");
     my ($line, $lineno);
+
     if($fd) {
         $lineno = 0;
         while($line = <$fd>) {
@@ -158,8 +171,16 @@ sub scan_file {
             foreach my $tag (@_) {
                 # TODO support the regx.
                 if($line =~ m/$tag/) {
+                    if(!$found and $unite) {
+                        print "---------------$filename---------------\n";
+                        $found = 1;
+                    }
                     $line =~ s/^\s+//;
-                    print("[$tag], $filename, ($lineno), $line");
+                    if($unite) {
+                        print("[$tag], ($lineno), $line");
+                    } else {
+                        print("[$tag], $filename, ($lineno), $line");
+                    }
                 }
             }
         }
