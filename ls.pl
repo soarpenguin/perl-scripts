@@ -31,9 +31,10 @@ Sort entries alphabetically if none of -cftuvSUX nor --sort is specified.
 
 Mandatory arguments to long options are mandatory for short options too.
   -a, --all                  do not ignore entries starting with .
-  -o                         like -l, but do not list group information
+  -g                         like -l, but do not list owner
   -1                         list one file per line
   -n, --numeric-uid-gid      like -l, but list numeric user and group IDs
+  -o                         like -l, but do not list group information
   -r, --reverse              reverse order while sorting
       --help     display this help and exit
       --version  output version information and exit
@@ -52,11 +53,13 @@ Exit status:
  2  if serious trouble (e.g., cannot access command-line argument).
 ";
 my ($all, $list, $reverse, $nogid, $numeric_uid_gid); 
+my ($noowner);
 
 my $ret = GetOptions( 
     'l'         => \$list,
     'n|numeric-uid-gid' => \$numeric_uid_gid,
     'all'       => \$all,
+    'g'         => \$noowner,
     'o'         => \$nogid,
     'reverse|r' => \$reverse,
     'help'	    => \&usage,
@@ -76,7 +79,7 @@ sub main {
         $ARGV[0] = getcwd();
     }
 
-    if($numeric_uid_gid) {
+    if($numeric_uid_gid or $noowner) {
         $list = 1;
     }
 
@@ -131,6 +134,8 @@ sub listfile {
     # the -o option just like -l, no group id.
     if($nogid) {
         printf "%1s%9s %3d %8s %8d %12s", $type, $right, $nlink, $uid, $size, $ctime;
+    } elsif($noowner) {
+        printf "%1s%9s %3d %8s %8d %12s", $type, $right, $nlink, $gid, $size, $ctime;
     } else {
         printf "%1s%9s %3d %8s %8s %8d %12s", $type,$right,$nlink,$uid,$gid,$size,$ctime;
     }
@@ -186,6 +191,8 @@ sub listdir {
             # the -o option just like -l, no group id.
             if($nogid) {
                 printf "%1s%9s %3d %8s %8d %12s", $type, $right, $nlink, $uid, $size, $ctime;
+            } elsif($noowner) {
+                printf "%1s%9s %3d %8s %8d %12s", $type, $right, $nlink, $gid, $size, $ctime;
             } else {
                 printf "%1s%9s %3d %8s %8s %8d %12s", $type,$right,$nlink,$uid,$gid,$size,$ctime;
             }
