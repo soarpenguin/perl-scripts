@@ -37,7 +37,10 @@ Usage: $script [option]... <files/dirs>
             such as: .c,.h,.pl etc
 
        -o <file>, --output <file>
-            Place the output into <file>. 
+            Place the output into <file>.
+
+       -i, --ignore-case
+            Ignore case distinctions in both the PATTERN and the input files. (-i is specified by POSIX.)
 
        -u   Display the filename first and then the match line. 
             Default is disable. Form like:
@@ -58,7 +61,7 @@ if ($^O ne 'linux') {
 &main();
 
 sub main {
-    my ($tag, $exts, $output, $unite, $ret); 
+    my ($tag, $exts, $output, $ignorecase, $unite, $ret); 
     $unite = 0;
 
     $ret = GetOptions( 
@@ -66,6 +69,7 @@ sub main {
         'exts|e=s'  => \$exts,
         'output|o=s'=> \$output,
         'help'	    => \&usage,
+        'ignore-case|i' => \$ignorecase,
         'unite|u'   => \$unite,
         'version|V' => \&version
     );
@@ -106,12 +110,12 @@ sub main {
                     foreach my $ext (@extents) {
                         if($file =~ /(\.(\w+))$/) {
                             if($1 eq $ext) {
-                                &scan_file($file, $unite, @tags);
+                                &scan_file($file, $ignorecase, $unite, @tags);
                             }
                         }
                     }
                 } else {
-                    &scan_file($file, $unite, @tags);
+                    &scan_file($file, $ignorecase, $unite, @tags);
                 }
             } elsif (-d _) {
                 my @subfiles = &scan_folder($file);
@@ -154,8 +158,9 @@ sub myprint {
 }
 
 sub scan_file {
-    my ($filename, $fd, $unite, $found);
+    my ($filename, $fd, $ignorecase, $unite, $found);
     $filename = shift;
+    $ignorecase = shift;
     $unite = shift;
     $found = 0;
     ## $filename
@@ -170,7 +175,16 @@ sub scan_file {
             $lineno++;
             foreach my $tag (@_) {
                 # TODO support the regx.
-                if($line =~ m/$tag/) {
+                if($ignorecase) {
+                    unless($line =~ m/$tag/i) {
+                        next;
+                    }
+                } else {
+                    unless($line =~ m/$tag/) {
+                        next;
+                    }
+                }
+                #if($line =~ m/$tag/) {
                     if(!$found and $unite) {
                         print "---------------$filename---------------\n";
                         $found = 1;
@@ -181,7 +195,7 @@ sub scan_file {
                     } else {
                         print("[$tag], $filename, ($lineno), $line");
                     }
-                }
+                #}
             }
         }
         close($fd);
