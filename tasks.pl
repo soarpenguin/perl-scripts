@@ -30,11 +30,11 @@ Usage: $script [option]... <files/dirs>
 
        -t <tag,tag,..>, --tags <tag,tag,..>
             The tags for research, separated by \',\'. 
-            Such as: FIXME,TODO,BUG
+            Such as: FIXME,TODO,BUG.
 
        -e <ext,ext,..>, --exts <ext,ext,..>             
             Source code file extents for research file, separated by \',\'.
-            such as: .c,.h,.pl etc
+            such as: .c,.h,.pl etc.
 
        -o <file>, --output <file>
             Place the output into <file>.
@@ -48,10 +48,10 @@ Usage: $script [option]... <files/dirs>
             [tag] [lineno] [content]
 
        -h, --help 
-            Display this help and exit
+            Display this help and exit.
 
-       -V,  --version  
-            output version information and exit
+       -V,  --version
+            output version information and exit.
 ";
 
 if ($^O ne 'linux') {
@@ -85,15 +85,15 @@ sub main {
     } else {
         @tags = split(",", $tag);
     }
-    ### @tags
+    print "The search tag is: @tags.\n";
 
     my @extents = ();
     if(! $exts) {
         print("Search for all text file.\n");
     } else {
         @extents = split(",", $exts);
+        print "The search file suffix is: @extents.\n";
     }
-    ### @extents
 
     ##--------start search the files----------------------
     #
@@ -103,6 +103,9 @@ sub main {
         open(STDOUT, ">$output") || print("Redirect stdout failed.\n");
     }
     ## @files
+    if($#files <= 0) {
+        @files = (".");
+    }
     foreach my $file (@files) {
         if(-e $file) {
             if(-f _) {
