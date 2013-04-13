@@ -36,6 +36,11 @@ Usage: $script [option]... <files/dirs>
             Source code file extents for research file, separated by \',\'.
             such as: .c,.h,.pl etc.
 
+       --exclude-dir=<D1>[,D2,]             
+            Exclude the given comma separated directories D1, D2 et cetera,
+            from being scanned. For example --exclude-dir=.cvs,.svn will
+            skip all files that have /.cvs/ or /.svn/ as part of their path. 
+
        -o <file>, --output <file>
             Place the output into <file>.
 
@@ -61,12 +66,13 @@ if ($^O ne 'linux') {
 &main();
 
 sub main {
-    my ($tag, $exts, $output, $ignorecase, $unite, $ret); 
+    my ($tag, $exts, $output, $ignorecase, $unite, $ret, $exclude); 
     $unite = 0;
 
     $ret = GetOptions( 
         'tags|t=s'  => \$tag,
         'exts|e=s'  => \$exts,
+        'exclude-dir=s' => \$exclude,
         'output|o=s'=> \$output,
         'help'	    => \&usage,
         'ignore-case|i' => \$ignorecase,
@@ -95,6 +101,13 @@ sub main {
         print "The search file suffix is: @extents.\n";
     }
 
+    my @exclude_dir = ();
+    if($exclude) {
+        @exclude_dir = split(",", $exclude);
+        @exclude_dir = grep(!/^\.+$/, @exclude_dir);
+        print "The exclude dir is: @exclude_dir.\n";
+    }
+
     ##--------start search the files----------------------
     #
     my @files = sort by_code @ARGV;
@@ -110,17 +123,24 @@ sub main {
         if(-e $file) {
             if(-f _) {
                 if(scalar @extents >= 1) {
-                    foreach my $ext (@extents) {
-                        if($file =~ /(\.(\w+))$/) {
-                            if($1 eq $ext) {
-                                &scan_file($file, $ignorecase, $unite, @tags);
-                            }
-                        }
+                    #foreach my $ext (@extents) {
+                    #    if($file =~ /(\.(\w+))$/) {
+                    #        if($1 eq $ext) {
+                    #            &scan_file($file, $ignorecase, $unite, @tags);
+                    #        }
+                    #    }
+                    #}
+                    if(&map_extends($file, @extents)) {
+                        &scan_file($file, $ignorecase, $unite, @tags);
                     }
                 } else {
                     &scan_file($file, $ignorecase, $unite, @tags);
                 }
             } elsif (-d _) {
+                if(&map_word($file, @exclude_dir)) {
+                    next;
+                }
+                
                 my @subfiles = &scan_folder($file);
                 push(@files, @subfiles);
             } else {
@@ -211,13 +231,13 @@ sub scan_file {
 sub scan_folder {
     my $dir = shift;
     ## $dir
-    my $dh;
-    opendir $dh, $dir or return undef;
+    opendir my $dh, $dir or return undef;
 
     my @files = readdir $dh;
     closedir($dh);
     @files = sort by_code @files;
     
+    # skip the hidden file or dir, such as .git/
     @files = grep(/^[^\.]/, @files); 
     for my $i(0..$#files) {
         $files[$i] = catfile($dir, $files[$i]);
@@ -228,4 +248,23 @@ sub scan_folder {
 
 sub by_code {
     return "\L$a" cmp "\L$b";
+}
+
+sub map_word {
+    my $word = shift;
+    my @array = @_;
+
+    map { if($word =~ $_) { return 1; }} @array;
+
+    return 0;
+}
+
+sub map_extends {
+    my $word = shift;
+    my @array = @_;
+    if($word =~ /(\.(\w+))$/) {
+        map { if($word =~ /${1}$/) { return 1; }} @array;
+    }
+    
+    return 0;
 }
