@@ -45,7 +45,8 @@ Usage: $script [option]... <files/dirs>
             Place the output into <file>.
 
        -i, --ignore-case
-            Ignore case distinctions in both the PATTERN and the input files. (-i is specified by POSIX.)
+            Ignore case distinctions in both the PATTERN and the input 
+            files. (-i is specified by POSIX.)
 
        -u   Display the filename first and then the match line. 
             Default is disable. Form like:
@@ -254,7 +255,7 @@ sub map_word {
     my $word = shift;
     my @array = @_;
 
-    map { if($word =~ $_) { return 1; }} @array;
+    map { if($word =~ /($_)$/) { return 1; } } @array;
 
     return 0;
 }
@@ -262,8 +263,9 @@ sub map_word {
 sub map_extends {
     my $word = shift;
     my @array = @_;
+
     if($word =~ /(\.(\w+))$/) {
-        map { if($word =~ /${1}$/) { return 1; }} @array;
+        map { if($word =~ /($_)$/) { return 1; } } @array;
     }
     
     return 0;
