@@ -28,11 +28,11 @@ my $myversion = '0.2.0';
 my $usage = "
 Usage: $script [option]... <files/dirs>
 
-       -t <tag,tag,..>, --tags <tag,tag,..>
+       -t <tag>[,tag,..], --tags=<tag>[,tag,..]
             The tags for research, separated by \',\'. 
             Such as: FIXME,TODO,BUG.
 
-       -e <ext,ext,..>, --exts <ext,ext,..>             
+       -e <ext>[,ext,..], --exts=<ext>[,ext,..]             
             Source code file extents for research file, separated by \',\'.
             such as: .c,.h,.pl etc.
 
@@ -40,6 +40,11 @@ Usage: $script [option]... <files/dirs>
             Exclude the given comma separated directories D1, D2 et cetera,
             from being scanned. For example --exclude-dir=.cvs,.svn will
             skip all files that have /.cvs/ or /.svn/ as part of their path. 
+
+       --exclude-exts=<ext1>[,ext2,]             
+            Exclude the given comma separated extends ext1, ext2 et cetera,
+            from being scanned. For example --exclude-dir=.out,.obj will
+            skip all files that have those extends. 
 
        -o <file>, --output <file>
             Place the output into <file>.
@@ -67,13 +72,14 @@ if ($^O ne 'linux') {
 &main();
 
 sub main {
-    my ($tag, $exts, $output, $ignorecase, $unite, $ret, $exclude); 
+    my ($tag, $exts, $output, $ignorecase, $unite, $ret, $exclude, $exclude_exts); 
     $unite = 0;
 
     $ret = GetOptions( 
         'tags|t=s'  => \$tag,
         'exts|e=s'  => \$exts,
         'exclude-dir=s' => \$exclude,
+        'exclude-exts=s' => \$exclude_exts,
         'output|o=s'=> \$output,
         'help'	    => \&usage,
         'ignore-case|i' => \$ignorecase,
@@ -91,23 +97,31 @@ sub main {
         &usage();
     } else {
         @tags = split(",", $tag);
+        print "+------------------------------------------+\n";
+        print "+\tThe search tag is: @tags.\n";
     }
-    print "The search tag is: @tags.\n";
 
     my @extents = ();
     if(! $exts) {
-        print("Search for all text file.\n");
+        print("+\tSearch for all text file.\n");
     } else {
         @extents = split(",", $exts);
-        print "The search file suffix is: @extents.\n";
+        print "+\tThe search file suffix is: @extents.\n";
     }
 
     my @exclude_dir = ();
     if($exclude) {
         @exclude_dir = split(",", $exclude);
         @exclude_dir = grep(!/^\.+$/, @exclude_dir);
-        print "The exclude dir is: @exclude_dir.\n";
+        print "+\tThe exclude dir is: @exclude_dir.\n";
     }
+
+    my @exclude_extends = ();
+    if($exclude_exts) {
+        @exclude_extends = split(",", $exclude_exts);
+        print "+\tThe exclude extends is: @exclude_extends.\n";
+    }
+    print "+------------------------------------------+\n";
 
     ##--------start search the files----------------------
     #
@@ -123,14 +137,12 @@ sub main {
     foreach my $file (@files) {
         if(-e $file) {
             if(-f _) {
+                if(scalar @exclude_extends >= 1) {
+                    if(&map_extends($file, @exclude_extends)) {
+                        next;
+                    } 
+                }
                 if(scalar @extents >= 1) {
-                    #foreach my $ext (@extents) {
-                    #    if($file =~ /(\.(\w+))$/) {
-                    #        if($1 eq $ext) {
-                    #            &scan_file($file, $ignorecase, $unite, @tags);
-                    #        }
-                    #    }
-                    #}
                     if(&map_extends($file, @extents)) {
                         &scan_file($file, $ignorecase, $unite, @tags);
                     }
