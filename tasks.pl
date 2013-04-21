@@ -131,8 +131,8 @@ sub main {
         open(STDOUT, ">$output") || print("Redirect stdout failed.\n");
     }
     ## @files
-    if($#files <= 0) {
-        @files = (".");
+    if(scalar @files <= 0) {
+        push @files, ".";
     }
     foreach my $file (@files) {
         if(-e $file) {
