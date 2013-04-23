@@ -69,7 +69,9 @@ if ($^O ne 'linux') {
     die "Only linux is supported but I am on $^O.\n";
 }
 
-&main();
+MAIN: {
+    &main();
+}
 
 sub main {
     my ($tag, $exts, $output, $ignorecase, $unite, $ret, $exclude, $exclude_exts); 
