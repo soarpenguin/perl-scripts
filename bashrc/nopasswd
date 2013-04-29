@@ -1,9 +1,175 @@
 #!/bin/env bash
 
-PUBFILE='~/.ssh/id_dsa.pub';
-AUTHFILE='~/.ssh/authorized_keys';
+# Some functions to make the below more readable
+INITLOG=/sbin/initlog
+KEYGEN=/usr/bin/ssh-keygen
+#DSA_KEY=/etc/ssh/ssh_host_dsa_key
+DSA_KEY=~/.ssh/id_dsa
+PUBFILE=~/.ssh/id_dsa.pub;
+AUTHFILE=~/.ssh/authorized_keys;
 
-#scp ~/.ssh/id_dsa.pub $1@$2:~/;
-scp $PUBFILE $1@$2:~/;
-# ssh $1@$2 "touch ~/.ssh/authorized_keys; cat ~/id_dsa.pub >> ~/.ssh/authorized_keys; chmod 644 ~/.ssh/authorized_keys; exit";
-ssh $1@$2 "touch $PUBFILE; cat ~/id_dsa.pub >> $AUTHFILE; chmod 644 $AUTHFILE; exit";
+echo_success() {
+  [ "$BOOTUP" = "color" ] && $MOVE_TO_COL
+  echo -n "[  "
+  [ "$BOOTUP" = "color" ] && $SETCOLOR_SUCCESS
+  echo -n $"OK"
+  [ "$BOOTUP" = "color" ] && $SETCOLOR_NORMAL
+  echo -n "  ]"
+  echo -ne "\r"
+  return 0
+}
+
+echo_failure() {
+  [ "$BOOTUP" = "color" ] && $MOVE_TO_COL
+  echo -n "["
+  [ "$BOOTUP" = "color" ] && $SETCOLOR_FAILURE
+  echo -n $"FAILED"
+  [ "$BOOTUP" = "color" ] && $SETCOLOR_NORMAL
+  echo -n "]"
+  echo -ne "\r"
+  return 1
+}
+
+echo_warning() {
+  [ "$BOOTUP" = "color" ] && $MOVE_TO_COL
+  echo -n "["
+  [ "$BOOTUP" = "color" ] && $SETCOLOR_WARNING
+  echo -n $"WARNING"
+  [ "$BOOTUP" = "color" ] && $SETCOLOR_NORMAL
+  echo -n "]"
+  echo -ne "\r"
+  return 1
+}
+
+# returns OK if $1 contains $2
+strstr() {
+  [ "${1#*$2*}" = "$1" ] && return 1
+  return 0
+}
+
+# Read in our configuration
+if [ -z "${BOOTUP:-}" ]; then
+  if [ -f /etc/sysconfig/init ]; then
+      . /etc/sysconfig/init
+  else
+    # This all seem confusing? Look in /etc/sysconfig/init,
+    # or in /usr/doc/initscripts-*/sysconfig.txt
+    BOOTUP=color
+    RES_COL=60
+    MOVE_TO_COL="echo -en \\033[${RES_COL}G"
+    SETCOLOR_SUCCESS="echo -en \\033[1;32m"
+    SETCOLOR_FAILURE="echo -en \\033[1;31m"
+    SETCOLOR_WARNING="echo -en \\033[1;33m"
+    SETCOLOR_NORMAL="echo -en \\033[0;39m"
+    LOGLEVEL=1
+  fi
+  if [ "$CONSOLETYPE" = "serial" ]; then
+      BOOTUP=serial
+      MOVE_TO_COL=
+      SETCOLOR_SUCCESS=
+      SETCOLOR_FAILURE=
+      SETCOLOR_WARNING=
+      SETCOLOR_NORMAL=
+  fi
+fi
+
+if [ "${BOOTUP:-}" != "verbose" ]; then
+   INITLOG_ARGS="-q"
+else
+   INITLOG_ARGS=
+fi
+
+# Log that something succeeded
+success() {
+  if [ -z "${IN_INITLOG:-}" ]; then
+     $INITLOG $INITLOG_ARGS -n $0 -s "$1" -e 1
+  else
+     # silly hack to avoid EPIPE killing rc.sysinit
+     trap "" SIGPIPE
+     echo "$INITLOG_ARGS -n $0 -s \"$1\" -e 1" >&21
+     trap - SIGPIPE
+  fi
+  [ "$BOOTUP" != "verbose" -a -z "$LSB" ] && echo_success
+  return 0
+}
+
+# Log that something failed
+failure() {
+  rc=$?
+  if [ -z "${IN_INITLOG:-}" ]; then
+     $INITLOG $INITLOG_ARGS -n $0 -s "$1" -e 2
+  else
+     trap "" SIGPIPE
+     echo "$INITLOG_ARGS -n $0 -s \"$1\" -e 2" >&21
+     trap - SIGPIPE
+  fi
+  [ "$BOOTUP" != "verbose" -a -z "$LSB" ] && echo_failure
+  [ -x /usr/bin/rhgb-client ] && /usr/bin/rhgb-client --details=yes
+  return $rc
+}
+
+do_dsa_keygen() {
+    if [ ! -s $DSA_KEY ]; then
+		echo -n $"Generating SSH2 DSA host key: "
+		if $KEYGEN -q -t dsa -f $DSA_KEY -C '' -N '' >&/dev/null; then
+			chmod 600 $DSA_KEY
+			chmod 644 $DSA_KEY.pub
+			if [ -x /sbin/restorecon ]; then
+			    /sbin/restorecon $DSA_KEY.pub
+			fi
+			success $"DSA key generation"
+			echo
+		else
+			failure $"DSA key generation"
+			echo
+			exit 1
+		fi
+    else
+        echo -n "DSA key existed: ";
+        success
+        echo
+	fi
+}
+
+scp_ssh_authfile() {
+    #echo "$DSA_KEY.pub $1@$2:~/";
+    echo -n $"scp ${PUBFILE##*/} file: ";
+    scp $PUBFILE $1@$2:~/ >/dev/null 2>&1;
+    # ssh $1@$2 "touch ~/.ssh/authorized_keys; cat ~/id_dsa.pub >> ~/.ssh/authorized_keys; chmod 645 ~/.ssh/authorized_keys; exit";
+    if [ $? -eq 0 ]; then 
+        success $"scp $PUBFILE sucessed.";
+        echo
+        # echo "touch $PUBFILE; cat ~/id_dsa.pub >> $AUTHFILE; chmod 644 $AUTHFILE; exit";
+        ssh $1@$2 "touch $PUBFILE; cat ~/id_dsa.pub >> $AUTHFILE; chmod 644 $AUTHFILE; exit";
+        
+        if [ $? -eq 0 ]; then
+            echo -n $"setup no password ssh:";
+            success $"setup no password ssh.";
+            echo
+        else
+            echo -n $"setup no password ssh:";
+            failure $"setup no password ssh.";
+            echo
+            exit;
+        fi
+    else
+        failure $"scp $PUBFILE failed.";
+        echo
+        exit;
+    fi
+}
+
+if [ $# -ne 1 ]; then 
+    echo "Usage: $0 host [user]";
+    exit;
+fi
+
+if [ -z $2 ]; then
+    user=`whoami`;
+else
+    user=$2;
+fi
+
+do_dsa_keygen
+scp_ssh_authfile $user $1
+
