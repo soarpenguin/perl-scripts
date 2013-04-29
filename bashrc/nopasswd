@@ -1,0 +1,9 @@
+#!/bin/env bash
+
+PUBFILE='~/.ssh/id_dsa.pub';
+AUTHFILE='~/.ssh/authorized_keys';
+
+#scp ~/.ssh/id_dsa.pub $1@$2:~/;
+scp $PUBFILE $1@$2:~/;
+# ssh $1@$2 "touch ~/.ssh/authorized_keys; cat ~/id_dsa.pub >> ~/.ssh/authorized_keys; chmod 644 ~/.ssh/authorized_keys; exit";
+ssh $1@$2 "touch $PUBFILE; cat ~/id_dsa.pub >> $AUTHFILE; chmod 644 $AUTHFILE; exit";
