@@ -14,8 +14,10 @@ print "Enter Target/hostname : ";
 chop ($target = <stdin>);
 print "Start Port : ";
 chop ($start_port = <stdin>);
+&check_port($start_port);
 print "End Port : ";
 chop ($end_port = <stdin>);
+&check_port($end_port);
 
 # start the scanning loop
 foreach ($port = $start_port ; $port <= $end_port ; $port++) 
@@ -40,3 +42,12 @@ foreach ($port = $start_port ; $port <= $end_port ; $port++)
 print "\n\nFinished Scanning $target\n";
 
 exit (0);
+
+sub check_port {
+    my $port = shift;
+
+    if ($port =~ /\D+/ or $port > 65535 or $port < 0) {
+        print "Please check the format of port: $port\n";
+        exit 1;
+    }
+}
