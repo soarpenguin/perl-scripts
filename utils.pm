@@ -72,3 +72,19 @@ sub showcursor {
     print "\e[?25h";
 }
 
+# get the size of the terminal.
+sub get_winsize {
+    require 'sys/ioctl.ph';
+    CORE::warn "no TIOCGWINSZ \n" unless defined &TIOCGWINSZ;
+    open(my $tty_fh, "+</dev/tty") or CORE::warn "No tty: $!\n";
+    my $winsize;
+    unless (ioctl($tty_fh, &TIOCGWINSZ, $winsize='')) {
+        CORE::warn sprintf "ioctl TIOCGWINSZ (%08x: $!)\n", &TIOCGWINSZ;
+    }
+    close($tty_fh);
+
+    #my ($col, $row, $xpixel, $ypixel) = unpack('S4', $winsize);
+    my ($row, $col) = unpack('S4', $winsize);
+
+    return ($row, $col);
+}
