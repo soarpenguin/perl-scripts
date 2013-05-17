@@ -1,0 +1,231 @@
+
+_sub()
+{
+    _SUB=$1
+    [ -n "$2" ] || return 1 ## nothing to search for: error
+    s_srch=${2}  ## pattern to replace
+    rep=$3       ## replacement string
+    case $_SUB in *$s_srch*)       ## if pattern exists in the string
+	    sr1=${_SUB%%$s_srch*}  ## take the string preceding the first match
+	    sr2=${_SUB#*$s_srch}   ## and the string following the first match
+	    _SUB=$sr1$rep$sr2      ## and sandwich the replacement string between them
+	    ;;
+	*) return 1 ;;   ## if the pattern does not exist, return an error code
+    esac
+}
+
+sub()
+{
+    _sub "$@" && printf "%s\n" "$_SUB"
+}
+
+_rsub()
+{
+    str=$1
+    [ "$2" ] || return 1
+    s_srch=${2}
+    rep=$3
+    case $str in *$s_srch*)
+         sr1=${str%$s_srch*}
+         sr2=${str##*$s_srch}
+         _RSUB=$sr1$rep$sr2
+         ;;
+         *) _RSUB=
+            false ;;
+    esac
+}
+
+rsub()
+{
+    _rsub "$@" && printf "%s\n" "$_RSUB"
+}
+
+_gsub()
+{
+    ## assign the string to sr2; this will be gobbled up with each substitution
+    sr2=$1
+
+    ## return an error if there is no pattern specified
+    [ -n "$2" ] || return 1
+
+    ## assign the search pattern to s_srch
+    s_srch=${2}
+
+    ##  assign the replacement text, if any, to rep
+    rep=$3
+
+    ## sr1 will hold the portion of the string that has been processed
+    sr1=
+
+    ## loop until sr2 no longer contains the search pattern
+    while :
+    do
+      case $sr2 in
+          *$s_srch*)
+
+              ## add the string up to the match,
+              ## and the replacement text, to sr1
+              sr1=$sr1${sr2%%$s_srch*}$rep
+
+              ## remove up to the match from sr2
+              sr2=${sr2#*$s_srch}
+              ;;
+          *) break ;;
+      esac
+    done
+    _GSUB=$sr1$sr2
+}
+
+gsub()
+{
+    _gsub "$@" && printf "%s\n" "$_GSUB"
+}
+
+_repeat()
+{
+    ## If the first argument is -n, repeat the string N times
+    ## otherwise repeat it to a length of N characters
+    case $1 in
+        -n) shift
+            r_num=$(( ${#1} * $2 ))
+            ;;
+        *) r_num=$2
+            ;;
+    esac
+    _REPEAT=$1
+    while [ ${#_REPEAT} -lt ${r_num} ]
+    do
+      _REPEAT=$_REPEAT$_REPEAT$_REPEAT
+    done
+    while [ ${#_REPEAT} -gt $r_num ]
+    do
+      _REPEAT=${_REPEAT%?}
+    done
+}
+
+repeat()
+{
+    _repeat "$@" && printf "%s\n" "${_REPEAT}"
+}
+
+_index()
+{
+    case $1 in
+        *$2*) ## extract up to beginning of the matching portion
+              idx=${1%%$2*}
+              ## the starting position is one more than the length
+              _INDEX=$(( ${#idx} + 1 )) ;;
+        *) _INDEX=0; return 1 ;;
+    esac
+}
+
+index()
+{
+    _index "$@" && printf "%d\n" "$_INDEX"
+}
+
+_rindex()
+{
+    case $1 in
+        *$2*) ## extract up to beginning of the last matching portion
+              idx=${1%$2*}
+              ## the starting position is one more than the length
+              _RINDEX=$(( ${#idx} + 1 )) ;;
+        *) _RINDEX=0; return 1 ;;
+    esac
+}
+
+rindex()
+{
+    _rindex "$@" && printf "%d\n" "$_RINDEX"
+}
+
+_substr()
+{
+   _SUBSTR=
+
+    ## store the parameters
+    ss_str=$1
+    ss_first=$2
+    ss_length=${3:-${#ss_str}}
+
+    ## return an error if the first character wanted is beyond end of string
+    if [ $ss_first -gt ${#ss_str} ]
+    then
+      return 1
+    fi
+
+    if [ $ss_first -gt 1 ]
+    then
+      ## build a string of question marks to use as a wildcard pattern
+      _repeat "?" $(( $ss_first - 1 ))
+
+      ## remove the beginning of string
+      ss_str=${ss_str#$_REPEAT}
+    elif [ ${ss_first} -lt 0 ] ## ${#ss_str} ]
+    then
+      ## count from end of string
+      _repeat "?" ${ss_first#-}
+
+      ## remove the beginning
+      ss_wild=$_REPEAT
+      ss_str=${ss_str#${ss_str%$ss_wild}}
+    fi
+
+    ## ss_str now begins at the point we want to start extracting
+    ## so print the desired number of characters
+    if [ ${#ss_str} -gt $ss_length ]
+    then
+      _repeat "${ss_wild:-??}" $ss_length
+      ss_wild=$_REPEAT
+      _SUBSTR=${ss_str%${ss_str#$ss_wild}}
+    else
+      _SUBSTR=${ss_str}
+    fi
+}
+
+substr()
+{
+    _substr "$@" && printf "%s\n" "$_SUBSTR"
+}
+
+_insert_str()
+{
+    _string=$1
+    i_string=$2
+    i_c=${3:-2}  ## use default if position not supplied
+    i_1=${_string:0:i_c-1}
+    i_2=${_string:$i_c}
+    _INSERT_STR=$i_1$i_string$i_2
+}
+
+_insert_str()
+{
+    _string=$1   ## The (soon-to-be) container string
+    i_string=$2  ## The string to be inserted
+    _pos=${3:-2} ## default to inserting after first character (position 2)
+
+    ## Store the string up to the position of the insert
+    _substr "$_string" 1 $(( $_pos - 1 ))
+      i_1=$_SUBSTR
+
+    ## Store the string that will go after the insert
+    _substr "$_string" $_pos
+    i_2=$_SUBSTR
+
+    ## Sandwich the insert between the two pieces
+    _INSERT_STR=$i_1$i_string$i_2
+}
+
+insert_str()
+{
+    _insert_str "$@" && printf "%s\n" "$_INSERT_STR"
+}
+
+case $BASH_VERSION in
+     [2-9]*)
+        . bash-funcs ## faster bash versions of some functions
+	;;
+     *)
+esac
+
