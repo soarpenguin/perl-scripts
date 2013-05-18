@@ -19,7 +19,7 @@ BEGIN {
     use vars qw($VERSION @ISA @EXPORT);
     @ISA = qw(Exporter);
     @EXPORT = qw(&mk_fd_nonblocking &clrscr &clreol &delline
-        &gotoxy &hidecursor &showcursor);
+        &gotoxy &hidecursor &showcursor &get_winsize);
 }
 
 sub mk_fd_nonblocking {
