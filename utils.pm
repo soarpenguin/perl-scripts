@@ -46,6 +46,18 @@ sub read_rcfile {
     return @lines;
 }
 
+sub warn {
+    my $program = shift;
+
+    return CORE::warn( $program, ': ', @_, "\n" );
+}
+
+sub die {
+    my $program = shift;
+
+    return CORE::die( $program, ': ', @_, "\n" );
+}
+
 # set socket nonblocking.
 sub mk_fd_nonblocking {
     use Fcntl qw(F_GETFL F_SETFL O_NONBLOCK);
