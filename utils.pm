@@ -18,10 +18,35 @@ BEGIN {
     use Exporter();
     use vars qw($VERSION @ISA @EXPORT);
     @ISA = qw(Exporter);
-    @EXPORT = qw(&mk_fd_nonblocking &clrscr &clreol &delline
+    @EXPORT = qw(&read_rcfile &mk_fd_nonblocking &clrscr &clreol &delline
         &gotoxy &hidecursor &showcursor &get_winsize);
 }
 
+#read the content of configure file.
+sub read_rcfile {
+    my $file = shift;
+
+    return unless defined $file && -e $file;
+
+    my @lines;
+
+    open( my $fh, '<', $file ) or die( "Unable to read $file: $!" );
+    while ( my $line = <$fh> ) {
+        chomp $line;
+        $line =~ s/^\s+//;
+        $line =~ s/\s+$//;
+
+        next if $line eq '';
+        next if $line =~ /^#/;
+
+        push( @lines, $line );
+    }
+    close $fh;
+
+    return @lines;
+}
+
+# set socket nonblocking.
 sub mk_fd_nonblocking {
     use Fcntl qw(F_GETFL F_SETFL O_NONBLOCK);
 
