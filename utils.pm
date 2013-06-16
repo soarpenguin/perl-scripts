@@ -11,6 +11,7 @@ package utils;
 use FileHandle;
 use Getopt::Long;
 use Time::Local qw(timelocal);
+use Term::ANSIColor;
 use strict;
 $|=1;
 
@@ -19,7 +20,8 @@ BEGIN {
     use vars qw($VERSION @ISA @EXPORT);
     @ISA = qw(Exporter);
     @EXPORT = qw(&read_rcfile &mk_fd_nonblocking &clrscr &clreol &delline
-        &gotoxy &hidecursor &showcursor &get_winsize);
+                &gotoxy &hidecursor &showcursor &get_winsize
+                &notice &warning &fatal_warning &attention);
 }
 
 #read the content of configure file.
@@ -124,4 +126,40 @@ sub get_winsize {
     my ($row, $col) = unpack('S4', $winsize);
 
     return ($row, $col);
+}
+
+# print notice message in color of green.
+sub notice {
+    my $message = shift;
+
+    print color "green";
+    print "$message\n";
+    print color "reset";
+}
+
+# print warning message in color of yellow.
+sub warning {
+    my $message = shift;
+
+    print color "yellow";
+    print "$message\n";
+    print color "reset";
+}
+
+# print fatal_warning message in color of red.
+sub fatal_warning {
+    my $message = shift;
+
+    print color "red";
+    print "$message\n";
+    print color "reset";
+}
+
+# print attention message in color of blue.
+sub attention {
+    my $message = shift;
+
+    print color "blue";
+    print "$message\n";
+    print color "reset";
 }
