@@ -1,5 +1,7 @@
 #!/bin/env perl
 #
+# Author: soarpenguin <soarpenguin@gmail.com>
+# First release May.14 2013
 ##################################################
 # usage of utils.pm, add code like:
 #   use lib "path"; #path is the file of utils.pm 
@@ -18,6 +20,7 @@ $|=1;
 BEGIN {
     use Exporter();
     use vars qw($VERSION @ISA @EXPORT);
+    $VERSION = 0.0.1;
     @ISA = qw(Exporter);
     @EXPORT = qw(&read_rcfile &mk_fd_nonblocking &clrscr &clreol &delline
                 &gotoxy &hidecursor &showcursor &get_winsize
