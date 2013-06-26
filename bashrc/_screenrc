@@ -1,0 +1,35 @@
+#bind F1 to go to next  window.
+bindkey -k k2 prev
+#bind F2 to move to previous window
+bindkey -k k3 next
+# bind F3 to rename a screen
+bindkey -k k1 title
+# bind F4 to new a screen session in this terminal
+bindkey -k k4 screen
+# bind F5 to detach
+bindkey -k k5 detach
+# bind F8 to enter copy mode
+bindkey -k k8 copy
+term linux
+setenv LC_CTYPE zh_CN.GBK
+setenv TERM linux
+#use ` as the Global Key
+defscrollback 10000
+
+#断线的时候自动detach
+autodetach on
+
+hardstatus alwayslastline
+hardstatus string '%{= kG}[ %{G}%H %{g}][%= %{=kw}%?%-Lw%?%{r}(%{W}%n*%f %t%?(%u)%?%{r})%{w}%?%+Lw%?%?%= %{g}][%{B}%Y-%m-%d %{W}%c %{g}]'
+
+vbell off
+screen bash
+screen bash
+screen bash
+screen bash
+screen bash
+screen bash
+screen bash
+screen bash
+screen bash
+screen bash
