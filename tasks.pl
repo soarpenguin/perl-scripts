@@ -213,12 +213,13 @@ sub scan_file {
             $lineno++;
             foreach my $tag (@_) {
                 # TODO support the regx.
+                my $re = qr/$tag/;
                 if($ignorecase) {
-                    unless($line =~ m/$tag/i) {
+                    unless($line =~ /$re/i) {
                         next;
                     }
                 } else {
-                    unless($line =~ m/$tag/) {
+                    unless($line =~ /$re/) {
                         next;
                     }
                 }
