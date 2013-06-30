@@ -24,7 +24,7 @@ BEGIN {
     @ISA = qw(Exporter);
     @EXPORT = qw(&read_rcfile &mk_fd_nonblocking &clrscr &clreol &delline
                 &gotoxy &hidecursor &showcursor &get_winsize
-                &notice &warning &fatal_warning &attention);
+                &notice &warning &fatal_warning &attention &debug_stdout);
 }
 
 #read the content of configure file.
@@ -165,4 +165,16 @@ sub attention {
     print color "blue";
     print "$message\n";
     print color "reset";
+}
+
+# print debug infomation to stderr.
+sub debug_stdout
+{
+    my $debug = shift;
+
+	if ($debug)
+	{
+		my ($msg) = @_;
+		print STDERR "$msg\n";
+	}
 }
