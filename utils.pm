@@ -19,12 +19,12 @@ $|=1;
 
 BEGIN {
     use Exporter();
-    use vars qw($VERSION @ISA @EXPORT);
+    use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
     $VERSION = 0.0.1;
     @ISA = qw(Exporter);
-    @EXPORT = qw(&read_rcfile &mk_fd_nonblocking &clrscr &clreol &delline
-                &gotoxy &hidecursor &showcursor &get_winsize
-                &notice &warning &fatal_warning &attention &debug_stdout);
+    @EXPORT = qw(&clrscr &clreol &delline &gotoxy &hidecursor &showcursor 
+                 &notice &warning &fatal_warning &attention &debug_stdout);
+    @EXPORT_OK = qw(&mk_fd_nonblocking &read_rcfile &get_winsize);
 }
 
 #read the content of configure file.
@@ -178,3 +178,5 @@ sub debug_stdout
 		print STDERR "$msg\n";
 	}
 }
+
+1;
