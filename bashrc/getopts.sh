@@ -1,5 +1,7 @@
 #!/bin/env bash
 
+export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+
 while getopts "cn" opt; do
     case $opt in
         c)

@@ -1,4 +1,5 @@
 #!/bin/bash
+export PS4='$0.$LINENO+ '
 
 AUTO_INVOKE_SUDO=yes
 
