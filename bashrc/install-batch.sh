@@ -2,6 +2,7 @@
 export PS4='$0.$LINENO+ '
 
 AUTO_INVOKE_SUDO=yes
+curdir=$(cd "$(dirname "$0")"; pwd)
 
 function invoke_sudo() 
 {
@@ -19,7 +20,7 @@ uid=`id -u`
 if [ $uid -ne '0' ]; then 
   # echo "Must running in root privilege.";
   # exit
-  invoke_sudo root "$0 $@"
+  invoke_sudo root "${curdir}/$0 $@"
 fi
 #------------------------------------------------------------------------------
 # Prerequisites
