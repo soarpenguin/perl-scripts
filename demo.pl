@@ -15,7 +15,7 @@ BEGIN {
     $curdir =~ s/[^\/]+$//;
     ### $curdir
     if ( -e $curdir ) {
-	unshift @INC, "$curdir/lib/";
+        unshift @INC, "$curdir/lib/";
     }
 }
 
