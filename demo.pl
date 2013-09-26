@@ -7,6 +7,18 @@
 #          First release Nov.14 2012
 # 1}}}
 
+BEGIN {
+    use Cwd 'realpath';
+    our $curdir;
+    $curdir = __FILE__;
+    $curdir = realpath($curdir);
+    $curdir =~ s/[^\/]+$//;
+    ### $curdir
+    if ( -e $curdir ) {
+	unshift @INC, "$curdir/lib/";
+    }
+}
+
 use strict;
 use warnings;
 use Getopt::Long;
@@ -23,10 +35,10 @@ my $myversion = '0.1.0';
 my $usage = "
 Usage: $script [option]...
 
-       -h, --help 
-              Display this help and exit
+	-h, --help 
+          Display this help and exit
 
-       -V     Display version information.
+	-V    Display version information.
 ";
 
 my $ret = GetOptions( 
