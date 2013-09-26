@@ -8,7 +8,9 @@ BEGIN {
     $curdir = realpath($curdir);
     $curdir =~ s/[^\/]+$//;
     ### $curdir
-    #push @INC, "$curdir/lib/";
+    if (-e "$curdir/lib") {
+        unshift @INC, "$curdir/lib/";
+    }
 }
 
 use strict;
