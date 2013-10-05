@@ -12,7 +12,7 @@ if (! -e $destfile) {
 }
 
 open(OFH, "<", $original) or die "open $original file failed.";
-open(RFH, "<",  $replace) or die "open $original file failed.";
+open(RFH, "<", $replace) or die "open $original file failed.";
 
 my @orig = <OFH>;
 my @rep = <RFH>;
@@ -27,6 +27,7 @@ if (scalar @orig != scalar @rep) {
 
 my $count = 0;
 
+# deal with the dest file.
 foreach (@orig) {
 
     chomp($orig[$count]);
@@ -37,11 +38,22 @@ foreach (@orig) {
     $count++;
 }
 
-
+# grep dest file and replace the match line.
 sub replace {
     my $orig = shift;
     my $rep = shift;
     my $dest = shift;
+
+    if ( ! -e $orig or ! defined($orig) ) {
+        print "please check the file of $orig\n";
+        exit 1;
+    } elsif ( ! -e $rep or ! defined($rep) ) {
+        print "please check the file of $rep\n";
+        exit 1;
+    } elsif ( ! -e $dest or ! defined($dest) ) {
+        print "please check the file of $dest\n";
+        exit 1;
+    }
 
     `fgrep "${orig}" ${dest} &>/dev/null`;
     if($? eq 0) {
@@ -51,4 +63,4 @@ sub replace {
         print "Mismatch the line of $orig\n";    
     }
 }
-           
+ 
