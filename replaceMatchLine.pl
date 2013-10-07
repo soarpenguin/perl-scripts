@@ -1,5 +1,11 @@
 #!/bin/env perl
 
+# replaceMatchLine.pl {{{1
+#
+# Author:  soarpenguin
+#          First release Oct.7 2013
+# 1}}}
+
 if (@ARGV != 3) {
     print "perl $0 origfile replfile destfile.\n";
     exit 1;
@@ -45,13 +51,13 @@ sub replace {
     my $dest = shift;
 
     if ( ! -e $orig or ! defined($orig) ) {
-        print "please check the file of $orig\n";
+        print "please check the orig file of $orig\n";
         exit 1;
     } elsif ( ! -e $rep or ! defined($rep) ) {
-        print "please check the file of $rep\n";
+        print "please check the replace file of $rep\n";
         exit 1;
     } elsif ( ! -e $dest or ! defined($dest) ) {
-        print "please check the file of $dest\n";
+        print "please check the dest file of $dest\n";
         exit 1;
     }
 
