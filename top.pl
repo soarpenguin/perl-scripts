@@ -14,13 +14,20 @@
 use warnings;
 use Getopt::Long;
 use File::Basename;
-use Smart::Comments;
 use POSIX qw(strftime);
 use File::Spec;
 
 use Term::ANSIColor;
 #print color("red"), "Stop!\n", color("reset");
 #print color("green"), "Go!\n", color("reset");
+
+my $DEBUG = 0;
+if ($DEBUG) {
+    eval q{
+        use Smart::Comments;
+    };
+    die $@ if $@;
+}
 
 my ($delay, $user);
 my $numbers = -1;
@@ -163,7 +170,7 @@ my $first = 0;
 my $rin = '';
 
 my @cpuinfo = &get_cpu_info();
-## @cpuinfo
+### @cpuinfo
 if(!@cpuinfo) {
     &mydie("Get cpu infomation failed!");
 }
@@ -463,7 +470,7 @@ START:
             $proc_t->{"egroup"} = getgrgid($proc_t->{"egid"});
             $proc_t->{"rgroup"} = getgrgid($proc_t->{"rgid"});
             $proc_t->{"fgroup"} = getgrgid($proc_t->{"fgid"});
-            ## $proc_t
+            ### $proc_t
         }
 
         if($proc_t->{"state"} eq 'Z') {
