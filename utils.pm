@@ -22,8 +22,11 @@ BEGIN {
     use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
     $VERSION = 0.0.1;
     @ISA = qw(Exporter);
-    @EXPORT = qw(&clrscr &clreol &delline &gotoxy &hidecursor &showcursor 
-                 &notice &warning &fatal_warning &attention &debug_stdout);
+    @EXPORT = qw(
+    	&clrscr &clreol &delline &gotoxy &hidecursor &showcursor 
+        &notice &warning &fatal_warning &attention &debug_stdout
+        __FUNC__ __func__
+    );
     @EXPORT_OK = qw(&mk_fd_nonblocking &read_rcfile &get_winsize);
 }
 
@@ -178,5 +181,10 @@ sub debug_stdout
 		print STDERR "$msg\n";
 	}
 }
+
+# Retrieve the name of the current function
+sub __FUNC__ { (caller(1))[3] . '()' }
+# display the name of the current function
+sub __func__ { (caller(1))[3] . '(' . join(', ', @_) . ')' }
 
 1;
