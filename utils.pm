@@ -23,9 +23,9 @@ BEGIN {
     $VERSION = 0.0.1;
     @ISA = qw(Exporter);
     @EXPORT = qw(
-    	&clrscr &clreol &delline &gotoxy &hidecursor &showcursor 
-        &notice &warning &fatal_warning &attention &debug_stdout
-        __FUNC__ __func__
+    	clrscr clreol delline gotoxy hidecursor showcursor 
+        notice warning fatal_warning attention debug_stdout
+        __FUNC__ __func__ get_now_time trim
     );
     @EXPORT_OK = qw(&mk_fd_nonblocking &read_rcfile &get_winsize);
 }
@@ -180,6 +180,21 @@ sub debug_stdout
 		my ($msg) = @_;
 		print STDERR "$msg\n";
 	}
+}
+
+sub get_now_time {
+    my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);
+    my $now_time = sprintf("%d.%d.%d %d:%d:%d", $year + 1900, $mon + 1, $mday, $hour, $min, $sec);
+
+    return "[$now_time]";
+}
+
+sub trim
+{
+	my $string = shift;
+	$string =~ s/^\s+//;
+	$string =~ s/\s+$//;
+	return $string;
 }
 
 # Retrieve the name of the current function
