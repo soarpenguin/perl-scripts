@@ -12,6 +12,9 @@ curdir=$(dirname $(readlink -f "$0"));
 #  echo "Unable to tar files to ${dir}" >&2
 #fi
 
+#'-t FD'
+#     True if file descriptor FD is open and refers to a terminal.
+
 # colour macros
 if [ -t 1 ]
 then
