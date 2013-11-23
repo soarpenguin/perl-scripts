@@ -64,10 +64,12 @@ aptitude -y install automake
 aptitude -y install bin86
 aptitude -y install build-essential
 aptitude -y install vim
-aptitude -y install gvim
+aptitude -y install vim-gnome
+aptitude -y install ctags
+aptitude -y install cscope
 aptitude -y install git
 aptitude -y install gitk
-aptitude -y install svn
+aptitude -y install subversion
 aptitude -y install mysql-server
 #aptitude -y install arduino
 #aptitude -y install eclipse-jdt
