@@ -1,6 +1,7 @@
 #!/bin/bash
 
-AUTO_INVOKE_SUDO=yes
+AUTO_INVOKE_SUDO=yes;
+curdir=$(dirname $(readlink -f $0));
 
 function invoke_sudo() 
 {
@@ -16,7 +17,7 @@ function invoke_sudo()
 
 uid=`id -u`
 if [ $uid -ne '0' ]; then 
-  invoke_sudo root "$0 $@"
+    invoke_sudo root "${curdir}/$0 $@"
 fi
 #------------------------------------------------------------------------------
 # Prerequisites
