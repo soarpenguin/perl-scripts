@@ -71,6 +71,7 @@ aptitude -y install git
 aptitude -y install gitk
 aptitude -y install subversion
 aptitude -y install mysql-server
+aptitude -y install sysklogd
 #aptitude -y install arduino
 #aptitude -y install eclipse-jdt
 #aptitude -y install python-pip
