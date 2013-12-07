@@ -14,11 +14,17 @@ use strict;
 use File::Basename;
 use Getopt::Std qw( getopts );
 use Getopt::Long;
-#use Smart::Comments;
 use POSIX ();
 use POSIX qw(strftime);
 
 use Term::ANSIColor;
+my $DEBUG = 0;
+if ($DEBUG) {
+    eval q{
+        use Smart::Comments;
+    };
+    die $@ if $@;
+}
 
 my %opts;
 my ($interval, $count); 
@@ -55,16 +61,16 @@ GetOptions('help|h' => \$opts{h},
         'P|p=s'     => \$opts{P},
         'version|V' => \$opts{V})
     or die print &usage();
-## %opts
+### %opts
 
 my $nr = &get_cpu_nr();
-## $nr
+### $nr
 my $actflags = 0;
 my $actset = 0;
 my $flags = 0;
 my $cpu_bitmap = 0;
 ($actflags, $flags, $cpu_bitmap) = &deal_opt(\%opts, $nr);
-## $actflags
+### $actflags
 
 if(@ARGV >= 3) {
     print "The problem of command line parameters too much!\n";
@@ -81,8 +87,8 @@ my (@uptime, @uptime0, @mp_tstamp);
 my $curr = 1;
 
 my ($row, $col) = &get_winsize();
-## $row
-## $col
+### $row
+### $col
 #------main-------
 &main();
 #print "\n";
@@ -90,11 +96,11 @@ my ($row, $col) = &get_winsize();
 
 sub main {
     $hz = POSIX::sysconf( &POSIX::_SC_CLK_TCK ) || 100;
-## $hz
+### $hz
     $irqcpu_nr = &get_irqcpu_nr($INTERRUPTS, NR_IRQCPU_PREALLOC);
-## $irqcpu_nr
+### $irqcpu_nr
     $softirqcpu_nr = &get_irqcpu_nr($SOFTIRQS, NR_IRQCPU_PREALLOC);
-## $softirqcpu_nr
+### $softirqcpu_nr
     
     $mp_tstamp[0] = localtime();
     # print the infomation header.
@@ -116,9 +122,9 @@ sub rw_mpstat_loop {
         ### @uptime0
     }
     $st_cpu[0] = &read_stat_cpu($nr);
-    ## @st_cpu
+    ### @st_cpu
     #@st_cpu = &read_stat_cpu($nr);
-    ## @st_cpu
+    ### @st_cpu
     #if (! $uptime0[0] and scalar @st_cpu > 1) {
     #    $uptime0[0] = $st_cpu[1]->{"user"} + $st_cpu[1]->{"nice"} +
     #        $st_cpu[1]->{"sys"} + $st_cpu[1]->{"idle"} +
@@ -143,7 +149,7 @@ sub rw_mpstat_loop {
     ### @uptime
     if(&get_bit($actflags, M_D_IRQ_SUM)) {
         @st_irq = &read_stat_irq($nr);
-        ## @st_irq
+        ### @st_irq
     }
 
     if(&get_bit($actflags, M_D_IRQ_SUM) || 
@@ -158,17 +164,17 @@ sub rw_mpstat_loop {
     if($interval and $interval > 0) {
         $running = -1;
         $mp_tstamp[2] = $mp_tstamp[0];
-        ## @mp_tstamp
+        ### @mp_tstamp
         $uptime[2] = $uptime[0];
-        ## @uptime
+        ### @uptime
         $uptime0[2] = $uptime0[0];
-        ## @uptime0
+        ### @uptime0
         $st_cpu[2] = $st_cpu[0];
-        ## @st_cpu
+        ### @st_cpu
         $st_irq[2] = $st_irq[0];
-        ## @st_irq
+        ### @st_irq
         $st_irqcpu[2] = $st_irqcpu[0];
-        ## @st_irqcpu
+        ### @st_irqcpu
         if(&get_bit($actflags, M_D_SOFTIRQS)) {
             $st_softirqcpu[2] = $st_softirqcpu[0];
         }
@@ -193,7 +199,7 @@ sub rw_mpstat_loop {
         
         if(&get_bit($actflags, M_D_IRQ_SUM)) {
             @st_irq = &read_stat_irq($nr);
-            ## @st_irq
+            ### @st_irq
         }
 
         if(&get_bit($actflags, M_D_IRQ_SUM) || 
@@ -301,15 +307,15 @@ sub get_irqcpu_nr {
 
 sub read_uptime {
     my $HZ = shift;
-    ## $HZ
+    ### $HZ
     my $UPTIME = "/proc/uptime";
 
     open(my $fd, "<", $UPTIME);
     return 0 unless $fd;
 
     my ($second, $cent) = split(" ", <$fd>);
-    ## $second
-    ## $cent
+    ### $second
+    ### $cent
     close($fd);
 
     return ($second * $HZ + $cent * $HZ / 100); 
@@ -351,7 +357,7 @@ sub read_stat_cpu {
              $st_cpu->{"idle"}, $st_cpu->{"iowait"}, $st_cpu->{"hardirq"},
              $st_cpu->{"softirq"}, $st_cpu->{"steal"}, $st_cpu->{"guest"},
              $st_cpu->{"guest_nice"}) = split(/\s+/, $_);
-            ## $st_cpu
+            ### $st_cpu
             push(@arrays, $st_cpu);
         } elsif ($_ =~ /cpu\d/) {
             # print $_;
@@ -359,7 +365,7 @@ sub read_stat_cpu {
              $st_cpu->{"idle"}, $st_cpu->{"iowait"}, $st_cpu->{"hardirq"},
              $st_cpu->{"softirq"}, $st_cpu->{"steal"}, $st_cpu->{"guest"},
              $st_cpu->{"guest_nice"}) = split(/\s+/, $_);
-            ## $st_cpu
+            ### $st_cpu
             push(@arrays, $st_cpu);
         } else {
             last;
@@ -543,8 +549,8 @@ sub deal_opt {
     my $cpu_bitmap = 0;
 
     while (my ($k, $v) = each %$opts) {
-        ## $k
-        ## $v
+        ### $k
+        ### $v
         if($k =~ /^I$/) {
             if($v) {
                 $actset = 1;
@@ -650,9 +656,9 @@ sub print_gal_header {
     my $nr = shift;
     my $time = `date +"%m/%d/%Y"`;
     chomp($time);
-    ## $time
+    ### $time
     my @sysinfo = split(" ", `uname -a`);
-    ## @sysinfo
+    ### @sysinfo
     print "$sysinfo[0] $sysinfo[2] ($sysinfo[1])\t$time\t_$sysinfo[11]_ ($nr CPU)\n";
 }
 
