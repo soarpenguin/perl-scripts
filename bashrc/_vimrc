@@ -8,7 +8,7 @@ set fencs=utf-8,usc-bom,euc-jp,gb18030,gbk,gb2312,cp936
 "set fonts
 "set guifont=Monospace\ 11
 set guifont=Nimbus\ Mono\ L\ Regular\ Oblique\ 10
-colorscheme evening
+"colorscheme evening
 
 let mapleader=","
 let g:mapleader=","
@@ -195,6 +195,7 @@ let Tlist_File_Fold_Auto_Close = 0
 " 不要显示折叠树
 let Tlist_Enable_Fold_Column = 1
 "set tags+=/usr/include/tags
+set tags+=~/.vim/systags
 set tags+=./tags
 
 "set line number
