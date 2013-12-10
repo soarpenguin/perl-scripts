@@ -69,3 +69,15 @@ sub version {
 	exit;
 }
 
+# workaround for functions that don't cope with utf8 well
+sub to_utf8($) {
+    my ($str) = @_;
+    utf8::decode($str) unless utf8::is_utf8($str);
+    return $str;
+}
+sub readlink_utf8($) {
+    my ($filename) = @_;
+    return to_utf8(readlink($filename));
+}
+sub realpath($) { return to_utf8(Cwd::realpath(@_)); }
+sub bsd_glob($) { return map {to_utf8($_)} File::Glob::bsd_glob(@_); }
