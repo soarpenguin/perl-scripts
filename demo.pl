@@ -81,3 +81,18 @@ sub readlink_utf8($) {
 }
 sub realpath($) { return to_utf8(Cwd::realpath(@_)); }
 sub bsd_glob($) { return map {to_utf8($_)} File::Glob::bsd_glob(@_); }
+
+# perform a code block and prevent it from blocking by using a timeout
+sub do_timeout($&)
+{
+   my ($seconds, $code) = @_;
+   local $SIG{ALRM} = sub {die "alarm clock restart executing $code"};
+   alarm $seconds;  # schedule an alarm in a few seconds
+   eval {
+      &$code; # execute the code block or subroutine passed in
+      alarm 0;  # cancel the alarm
+   };
+   if ($@ and $@ !~ /^alarm clock restart/) {die $@};
+} # noblock()
+
+do_timeout 10, sub { print "Hello, World!\n"};
