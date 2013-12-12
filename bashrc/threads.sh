@@ -16,6 +16,7 @@ mkfifo ${tmp_file}
 exec 9<>${tmp_file}
 
 #trap "rm -f ${tmp_file}; exit" INT TERM EXIT  
+trap 'rm -f "${tmp_file}"; exit $?' INT TERM EXIT
 
 for ((i=0;i<${g_THREAD_NUM};i++))
 do
