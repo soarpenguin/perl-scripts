@@ -189,6 +189,33 @@ sub get_now_time {
     return "[$now_time]";
 }
 
+sub print_error
+{
+    my ($string,$string2, $file, $line) = @_;
+    use File::Basename;
+    $file = basename($file);
+    chomp $string;
+
+    print STDOUT get_now_time() . $string . "[" . $file . ":" . $line ."]".$string2."\n";
+
+}
+
+# print_log("[Notice][name]","xxxx", __FILE__, __LINE__);
+sub print_log
+{
+    my ($method,$string, $file, $line) = @_;
+    use File::Basename;
+    $file = basename($file);
+    chomp $string;
+    my $components = '[Trace][';
+    if($method eq 'main'){
+        $components .='main]'
+    } else{
+        $components .= $method."]";
+    }
+    print STDOUT get_now_time() . $components . "[" . $file . ":" . $line ."]" . $string."\n";
+}
+
 sub trim
 {
 	my $string = shift;
