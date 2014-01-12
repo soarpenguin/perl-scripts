@@ -7,6 +7,12 @@ export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }';
 curdir=$(cd "$(dirname "$0")"; pwd);
 curdir=$(dirname $(readlink -f "$0"));
 
+MYNAME="${0##*/}"
+report_err() { echo "${MYNAME}: Error: $*" >&2 ; }
+
+cleanup() { rm -f "tmp.*" ; }
+trap cleanup EXIT
+
 #tar -cf - ./* | ( cd "${dir}" && tar -xf - )
 #if [[ "${PIPESTATUS[0]}" -ne 0 || "${PIPESTATUS[1]}" -ne 0 ]]; then
 #  echo "Unable to tar files to ${dir}" >&2
@@ -102,3 +108,4 @@ _print_fatal() {
 }
 
 #_print_fatal "Command '$cmd' does not exist!"
+
