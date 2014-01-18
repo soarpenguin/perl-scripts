@@ -1,6 +1,6 @@
 #!/bin/env bash
 
-if [ $# ne 2 ]; then
+if [ $# -ne 2 ]; then
     echo "$0 delfile sourcefile"
     exit 1
 fi
