@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+# Quote for re-use in the shell
+# quote 'a b' -> 'a\ b'
+quote () {
+    printf %q "$1"
+}
+
+# Some error messages
+error_no_arg () { die "option ${1%%=*} does not take any arguments"; }
+error_missing_arg () { die "option ${1%%=*} takes an argument"; }
+
+# write <line>
+# Write to the config file
+write () {
+    echo "$*" >&3
+}
+
+
+# contains <haystack> <needle>
+# Test if the space-separated list haystack contains needle
+contains () {
+    local d=" $1 "
+    [[ "${d% $2 *}" != "$d" ]]
+}
+
+# remove <list> <item>
+# remove an item from a space-separated list
+remove () {
+    if contains "$1" "$2"; then
+        local d=" $1 "
+        echo -n "${d%% $2 *} ${d#* $2 }"
+    else
+        echo -n "$1"
+    fi
+}
+
+# any "<list>" <command>
+# Test if the command is true for any element of the space seperated list
+any () {
+    local list=$1
+    shift
+    for x in $list; do
+        if "$@" $x; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# lookup <dict> <key> [var]
+# dict is an assoc-list composed of two seperators followed by a list of pairs
+# eg: ':|foo:bar|test:123|baz:quux' or '= a=b c=d'
+lookup () {
+    local _val=${1#*${1:1:1}$2${1:0:1}}
+    if [[ "$_val" = "$1" ]]; then
+        unset ${3:-$2}
+        return 1
+    fi
+    eval "${3:-$2}=$(quote "${_val%%${1:1:1}*}")"
+}
+
+# Some utility functions
+# When bash 4 becomes ubiquitous, we can use ${//}, ${^^} and ${,,}
+uc () { echo "$*" | tr '[:lower:]' '[:upper:]'; }
+lc () { echo "$*" | tr '[:upper:]' '[:lower:]'; }
+subst () { echo "${1%%$2*}$3${1#*$2}"; }
+
+# bash's ! as a command
+not () {
+    ! "$@"
+}
