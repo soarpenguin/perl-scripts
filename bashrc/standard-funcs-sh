@@ -345,3 +345,17 @@ cleanup()
 }
 trap cleanup EXIT  ## Set trap to call cleanup on exit
 
+# Find a static library and print it's path
+# XXX: define $try_lib_paths first.
+static_lib_lookup () {
+    for path in $try_lib_paths; do
+		local l=$path/lib$1.a
+		test -f $l && echo $l && return 0
+    done
+}
+
+# Some utility functions
+# When bash 4 becomes ubiquitous, we can use ${//}, ${^^} and ${,,}
+uc () { echo "$*" | tr '[:lower:]' '[:upper:]'; }
+lc () { echo "$*" | tr '[:upper:]' '[:lower:]'; }
+subst () { echo "${1%%$2*}$3${1#*$2}"; }
