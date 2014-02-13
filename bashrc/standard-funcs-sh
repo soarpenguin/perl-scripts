@@ -102,16 +102,16 @@ arg()
     esac
 }
 
-# Some error messages
-error_no_arg () { die "option ${1%%=*} does not take any arguments"; }
-error_missing_arg () { die "option ${1%%=*} takes an argument"; }
-
 die() {
     result=$1
     shift
     printf "%s\n" "$*" >&2
     exit $result
 }
+
+# Some error messages
+error_no_arg () { die 1 "option ${1%%=*} does not take any arguments"; }
+error_missing_arg () { die 1 "option ${1%%=*} takes an argument"; }
 
 _show_date()
 {
@@ -184,7 +184,7 @@ date_vars()
     export datestamp MonthAbbrev DayOfWeek DayNum
 }
 
-is_num()
+_is_num()
 {
     case $1 in
         *[!0-9]*) return 5 ;;  ## Fail is any character is not a digit from 0 to 9
