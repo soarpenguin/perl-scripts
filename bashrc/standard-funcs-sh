@@ -1,4 +1,3 @@
-
 get_key()
 {
     [ -t 0 ] && {  ## Check whether input is coming from a terminal
@@ -102,6 +101,10 @@ arg()
            ;;
     esac
 }
+
+# Some error messages
+error_no_arg () { die "option ${1%%=*} does not take any arguments"; }
+error_missing_arg () { die "option ${1%%=*} takes an argument"; }
 
 die() {
     result=$1
