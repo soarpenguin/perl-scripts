@@ -63,7 +63,7 @@ sub replace {
 
     `fgrep "${orig}" ${dest} &>/dev/null`;
     if($? eq 0) {
-        `sed -e "s/${orig}/${rep}/" ${dest} >${dest}.tmp`;
+        `sed -e "s/\<${orig}\>/${rep}/" ${dest} >${dest}.tmp`;
         `mv ${dest}.tmp ${dest}`;
     } else {
         print "Mismatch the line of $orig\n";    
