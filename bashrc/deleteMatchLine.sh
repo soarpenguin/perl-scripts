@@ -32,7 +32,7 @@ do
         continue
     fi
 
-    sed -e "/${line}/d" ${sourcefile} >${sourcefile}.tmp
+    sed -e "/\<${line}\>/d" ${sourcefile} >${sourcefile}.tmp
     mv ${sourcefile}.tmp ${sourcefile}
 done
 
