@@ -25,7 +25,7 @@ BEGIN {
     @EXPORT = qw(
     	clrscr clreol delline gotoxy hidecursor showcursor 
         notice warning fatal_warning attention debug_stdout
-        __FUNC__ __func__ get_now_time trim
+        __FUNC__ __func__ get_now_time trim fopen
     );
     @EXPORT_OK = qw(&mk_fd_nonblocking &read_rcfile &get_winsize);
 }
@@ -228,5 +228,42 @@ sub trim
 sub __FUNC__ { (caller(1))[3] . '()' }
 # display the name of the current function
 sub __func__ { (caller(1))[3] . '(' . join(', ', @_) . ')' }
+
+use constant DEFAULT_FILE_OPEN_MODE => 'r';
+sub fopen 
+{
+    my ($file, $mode) = @_;
+    my $fh;
+
+    my $err_msg;
+
+    if(!defined($file) || $file eq "") {
+        return -1;
+    }
+
+    if(!defined($mode) || $file eq "") {
+        $mode = DEFAULT_FILE_OPEN_MODE;
+    }
+
+    if($mode ne "r" && $mode ne "r+"
+       && $mode ne "w" && $mode ne "w+"
+       && $mode ne "a" && $mode ne "a+" ) {
+       #print_log("[Notice][__FUNC__]", "")
+
+       print "[fopen] open file [$file] ERROR: [$mode] is invalid\n";
+
+       return -1;
+    }
+
+    $fh = new FileHandle "$file", "$mode";
+    if(defined $fh) {
+        #print "[fopen] open file [$file] [$mode] sucessed";
+        return $fh;
+
+    } else {
+        print "[fopen] open file [$file] [$mode] ERROR: [$@]\n";
+        return -1;
+    }
+}
 
 1;
