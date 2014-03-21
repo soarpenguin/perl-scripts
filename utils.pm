@@ -203,7 +203,7 @@ sub print_error
 # print_log("[Notice][name]","xxxx", __FILE__, __LINE__);
 sub print_log
 {
-    my ($method,$string, $file, $line) = @_;
+    my ($method, $string, $file, $line) = @_;
     use File::Basename;
     $file = basename($file);
     chomp $string;
@@ -248,20 +248,19 @@ sub fopen
     if($mode ne "r" && $mode ne "r+"
        && $mode ne "w" && $mode ne "w+"
        && $mode ne "a" && $mode ne "a+" ) {
-       #print_log("[Notice][__FUNC__]", "")
+        print_log("[Error][" . __FUNC__. "]", "open file [$file] ERROR: [$mode] is invalid",
+                  __FILE__, __LINE__);
 
-       print "[fopen] open file [$file] ERROR: [$mode] is invalid\n";
-
-       return -1;
+        return -1;
     }
 
     $fh = new FileHandle "$file", "$mode";
     if(defined $fh) {
-        #print "[fopen] open file [$file] [$mode] sucessed";
         return $fh;
 
     } else {
-        print "[fopen] open file [$file] [$mode] ERROR: [$@]\n";
+        print_log("[Error][" . __FUNC__. "]", "open file [$file] [$mode] ERROR: [$@]",
+                  __FILE__, __LINE__);
         return -1;
     }
 }
