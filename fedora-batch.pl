@@ -23,7 +23,7 @@ use Term::ANSIColor;
 my $script = basename $0;
 my $myversion = '0.2.0';
 
-# useage string.
+# usage string.
 my $usage = "
 Usage: $script [option...] file
 

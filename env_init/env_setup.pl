@@ -1,24 +1,70 @@
 #!/usr/bin/env perl
 #
+
+# env_setup.pl -- initial environment for git/bash/vim/ctags. {{{1
+#
+# Author:  soarpenguin <soarpenguin@gmail.com>
+#          First release Mar.13 2014
+# 1}}}
 use strict;
 use Term::ANSIColor;
+use Getopt::Long;
+use File::Basename;
 
 my %files = (
-    "_vimrc" => "~/.vimrc",
+    "_vimrc"        => "~/.vimrc",
     "_bash_history" => "~/.bash_history",
-    "_bashrc" => "~/.bashrc",
-    "_vim" => "~/.vim"
+    "_bashrc"       => "~/.bashrc",
+    "_vim"          => "~/.vim"
 );
 
-&setup_ctags();
+my $script = basename $0;
+my $myversion = '0.2.0';
+
+$| = 1;
+# usage string.
+my $usage = "
+Usage: $script [option...]
+
+       --git
+            Setup for git config.
+
+       --ctags
+            Setup system ctags file form /usr/include /usr/local/include/.
+            need to setup .vimrc source ~/.vim/systags.
+
+       --all | -a
+            Setup all for git ctags and vim/bashrc.
+
+       -h, --help
+            Display this help and exit.
+
+       -V,  --version
+            Output version information and exit.
+";
+
+my ($git, $ctags, $all, $ret);
+# command option resolving.
+$ret = GetOptions(
+    'git'       => \$git,
+    'ctags'     => \$ctags,
+    'all|a'     => \$all,
+    'help|h'	=> \&usage,
+    'version|V' => \&version
+);
 
 &backup_and_setup(\%files);
 
-&setup_git();
+if ($all or $ctags) {
+    &setup_ctags();
+}
+
+if ($all or $git) {
+    &setup_git();
+}
 #
 #
 
-$| = 1;
 sub backup_and_setup {
     my $files = shift;
     my $cmd;
@@ -29,10 +75,10 @@ sub backup_and_setup {
                 print("backup and setup $key => $value\n");
                 $cmd = "cp -rf $value $value.bak";
                 print "$cmd\n";
-                #&run_cmd_api($cmd, 0);
+                &run_cmd_api($cmd, 1);
                 $cmd = "cp -rf $key $value";
                 print "$cmd\n";
-                #&run_cmd_api($cmd, 0);
+                &run_cmd_api($cmd, 1);
             } else {
                 print("$value is not exists, skip for setup.\n");
             }
@@ -46,7 +92,9 @@ sub backup_and_setup {
             }
         } 
     } else {
+        print color("red");
         print "invalid parameter.\n"; 
+        print color("reset");
     }
 }
 
@@ -87,7 +135,7 @@ sub run_cmd_api
     
     while ($retry_time < $max_retry_time) {
         $start_time = time;
-        #$my_return{desc} = `$cmd`;
+        $my_return{desc} = `$cmd`;
         $my_return{value} = $?>>8;
         $end_time = time;
         $con_time = sprintf("%.3f", $end_time - $start_time);
@@ -101,3 +149,12 @@ sub run_cmd_api
     return \%my_return;
 }
 
+sub usage {
+    print $usage;
+    exit;
+}
+
+sub version {
+    print "$script version $myversion\n";
+    &usage();
+}
