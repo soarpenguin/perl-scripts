@@ -196,7 +196,7 @@ sub print_error
     $file = basename($file);
     chomp $string;
 
-    print STDOUT get_now_time() . $string . "[" . $file . ":" . $line ."]".$string2."\n";
+    print STDOUT get_now_time() . $string . "[" . $file . ":" . $line . "]" . $string2."\n";
 
 }
 
@@ -264,5 +264,29 @@ sub fopen
         return -1;
     }
 }
+
+my $warnings = 0;
+
+# Print a usuage message on a unknown option.
+# Requires my patch to Getopt::Std of 25 Feb 1999.
+$SIG {__WARN__} = sub {
+    if (substr ($_[0], 0, 14) eq "Unknown option") {die "Usage"};
+    require File::Basename;
+    $0 = File::Basename::basename ($0);
+    $warnings = 1;
+    warn "$0: @_";
+};
+
+$SIG {__DIE__} = sub {
+    require File::Basename;
+    $0 = File::Basename::basename ($0);
+    if ( substr($_ [0], 0,  5) eq "Usage") {
+    	my $usage = shift;
+        die <<EOF;
+$usage;
+EOF
+    }
+    die "$0: @_";
+};
 
 1;
