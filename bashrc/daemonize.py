@@ -35,24 +35,5 @@ def daemonize():
         except OSError:  # This FD wasn't opened...
             pass         # ... ignore the exception.
 
-
-def _parse_args(args):
-    dargs = {
-        'Version':3,
-        'DestHost':'localhost',
-        'Community':'public',
-        'Timeout':1000000,
-        'Retries':3,
-        'RemotePort':161,
-        'LocalPort':0
-        }
-    keys = args.keys()
-    for key in keys:
-        if dargs.has_key(key):
-            dargs[key] = args[key]
-        else:
-            print >>stderr, "ERROR: unknown key", key
-    return dargs
-
 if __name__ == '__main__':
     daemonize()
