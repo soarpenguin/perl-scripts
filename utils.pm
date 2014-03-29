@@ -25,7 +25,7 @@ BEGIN {
     @EXPORT = qw(
     	clrscr clreol delline gotoxy hidecursor showcursor 
         notice warning fatal_warning attention debug_stdout
-        __FUNC__ __func__ get_now_time trim fopen
+        __FUNC__ __func__ get_now_time trim fopen print_log
     );
     @EXPORT_OK = qw(&mk_fd_nonblocking &read_rcfile &get_winsize);
 }
@@ -209,11 +209,11 @@ sub print_log
     chomp $string;
     my $components = '[Trace][';
     if($method eq 'main'){
-        $components .='main]'
+        $components .= 'main]'
     } else{
-        $components .= $method."]";
+        $components .= $method . "]";
     }
-    print STDOUT get_now_time() . $components . "[" . $file . ":" . $line ."]" . $string."\n";
+    print STDOUT get_now_time() . $components . "[" . $file . ":" . $line . "]" . $string. "\n";
 }
 
 sub trim
