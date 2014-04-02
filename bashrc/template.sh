@@ -108,4 +108,13 @@ _print_fatal() {
 }
 
 #_print_fatal "Command '$cmd' does not exist!"
+ERR_ACCESS=3
+check_user() {
+    owner=`stat -c "%u" "$0"`;
+    current_userid=`id -u`;
+
+    if [ x"$owner" != x"$current_userid" ]; then
+        exit ${ERR_ACCESS};
+    fi
+}
 
