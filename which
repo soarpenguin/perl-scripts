@@ -1,0 +1,131 @@
+#!/usr/bin/env perl
+#
+
+use strict;
+
+my ($VERSION) = '1.0.0.0' =~ /([.\d]+)/;
+
+my $opt_a = 0;
+
+if (@ARGV) {
+    if ($ARGV [0] eq '-a') {
+        $opt_a = 1;
+    }
+    if ($ARGV [0] eq '--version') {
+        $0 =~ s{.*/}{};
+        print "$0 (Perl bin utils) $VERSION\n";
+        exit;
+    }
+    if ($ARGV [0] eq '--help') {
+        $0 =~ s{.*/}{};
+        print <<EOF;
+Usage: $0 [OPTION] [COMMAND [COMMAND [COMMAND ... ]]]
+
+For each command, report the full path to this command, if any.
+
+Options:
+       --version:  Print version number, then exit.
+       --help:     Print usage, then exit.
+       --:         Stop parsing options.
+EOF
+        exit;
+    }
+    if ($ARGV [0] eq '--') {
+        shift;
+    }
+}
+
+# set up defaults.
+my @PATH = ();
+my $PATHVAR = 'PATH';
+my $path_sep = ':';
+my $file_sep = '/';
+my @PATHEXT = ();
+
+my $Is_DOSish = ($^O eq 'MSWin32') ||
+                ($^O eq 'dos') ||
+                ($^O eq 'os2') ;
+
+if ($Is_DOSish) {
+    $path_sep = ';';
+}
+if ($^O eq 'MacOS') {
+    $path_sep = '\,';
+    $PATHVAR = 'Commands';
+    # since $ENV{Commands} contains a trailing ':'
+    # we don't need it here:
+    $file_sep = '';
+}
+
+# Split the path.
+if (defined($ENV{$PATHVAR})) {
+    @PATH = split /$path_sep/ => $ENV{$PATHVAR};
+}
+# Add OS dependent elements.
+if ($^O eq 'VMS') {
+    my $i = 0;
+    my $path_element = undef;
+    while (defined($path_element = $ENV{"DCL\$PATH;$i"})) {
+        push(@PATH, $path_element);
+        $i++;
+    }
+    # PATH may be a search list too
+    $i = 0;
+    $path_element = undef;
+    while (defined($path_element = $ENV{"PATH;$i"})) {
+        push(@PATH, $path_element);
+        $i++;
+    }
+    # PATH and DCL$PATH are likely to use native dirspecs.
+    $file_sep = '';
+}
+
+# trailing file types (NT/VMS)
+if (defined($ENV{PATHEXT})) {
+    @PATHEXT = split /$path_sep/ => $ENV{PATHEXT};
+}
+if ($^O eq 'VMS') { @PATHEXT = qw(.exe .com); }
+
+COMMAND:
+foreach my $command (@ARGV) {
+    if ($^O eq 'VMS') {
+        my $symbol = `SHOW SYMBOL $command`; # line feed returned
+        if (!$?) {
+            print "$symbol";
+            next COMMAND unless $opt_a;
+        }
+    }
+    if ($^O eq 'MacOS') {
+        my @aliases = split /$path_sep/ => $ENV{Aliases};
+        foreach my $alias (@aliases) {
+            if (lc($alias) eq lc($command)) {
+                # MPW-Perl cannot resolve using `Alias $alias`
+                print "Alias $alias\n";
+                next COMMAND unless $opt_a;
+            }
+        }
+    }
+    foreach my $dir (@PATH) {
+        if ($^O eq 'MacOS') {
+            if (-e "$dir$file_sep$command") {
+                print "$dir$file_sep$command\n";
+                next COMMAND unless $opt_a;
+            }
+        }
+        else {
+            if (-x "$dir$file_sep$command") {
+                print "$dir$file_sep$command\n";
+                next COMMAND unless $opt_a;
+            }
+        }
+        if (@PATHEXT) {
+            foreach my $ext (@PATHEXT) {
+                if (-x "$dir$file_sep$command$ext") {
+                    print "$dir$file_sep$command$ext\n";
+                    next COMMAND unless $opt_a;
+                }
+            }
+        }
+    }
+}
+
