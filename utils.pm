@@ -265,6 +265,41 @@ sub fopen
     }
 }
 
+#@param $dir_path dir to list
+#@param $files file list reference
+#@param $tag static empty dir or not,1:yes, 0:no
+sub print_filelist_of_dir {
+    my ($dir_path, $tag)  = @_;
+    my @dirs = ( $dir_path . '/' );
+
+    my ($dir, $file);
+    print "Start to list the files\n";
+    while ($dir = pop(@dirs)) {
+        local *DH;
+        if (!opendir (DH, $dir)) {
+            print "[Fail][Can't open the dir: $dir: $!] \n";
+            next;
+        }
+        foreach (readdir(DH)) {
+            if ($_ eq '.' || $_ eq '..') {
+                next;
+            }
+            $file = $dir . $_;
+            if (!-l $file && -d _) {
+                $file .= '/';
+                push (@dirs, $file);
+                if (defined $tag && $tag) {
+                    print "$file\n";
+                }
+            }else {
+                print "$file\n";
+            }
+        }
+        closedir(DH);
+    }
+    print "End of list the files\n";
+}
+
 my $warnings = 0;
 
 # Print a usuage message on a unknown option.
