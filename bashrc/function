@@ -111,3 +111,11 @@ function have_tail_slash()
         return 0;
     fi
 }
+
+MD5="/usr/bin/md5sum"
+function validate_checksum() {
+  cksum=`$MD5 "$1" | sed 's/.*\([0-9a-fA-F]\{32\}\).*/\1/'`
+  valid=`< "$srcdir/${1%-t}.md5"`
+  test "x$cksum" = "x$valid"
+}
+
