@@ -119,3 +119,17 @@ function validate_checksum() {
   test "x$cksum" = "x$valid"
 }
 
+G_LOG_MIN_LINE_NUM=1000
+G_LOG_MAX_LINE_NUM=10000
+G_PID=$$
+function clean_log
+{
+    local log_file="${G_LOG_FILE}"
+    local current_line=0
+    current_line=`wc -l $log_file | awk '{print $1}'`
+    if [ $current_line -ge $G_LOG_MAX_LINE_NUM ]
+    then
+        tail -${G_LOG_MIN_LINE_NUM}  ${log_file} >${log_file}.${G_PID}
+        mv ${log_file}.${G_PID} ${log_file}
+    fi
+}
