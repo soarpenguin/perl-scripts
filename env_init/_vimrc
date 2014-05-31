@@ -22,6 +22,10 @@ set fdm=indent
 " history文件中需要记录的行数
 set history=100
 
+" set max column num
+set cc=80
+set cursorcolumn
+
 " 在处理未保存或只读文件的时候，弹出确认
 set confirm
 
