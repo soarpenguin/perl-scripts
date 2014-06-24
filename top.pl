@@ -213,14 +213,6 @@ START:
     my $fd;
 
     $uptime = &fmttime(&get_uptime()); 
-    # if( !$fd) {
-    #     ($min, $hour, $day) = (0, 0, 0);
-    # } else {
-    #     my ($tmp, undef) = split(/\s+/, <$fd>);
-    #     print "$tmp\n";
-    #     close($fd);
-    #     (undef, $min, $hour, $day)= localtime($tmp);
-    # }
     my ($sysload1, $sysload5, $sysload15);
     #open($fd, "<", File::Spec->catfile($proc, "loadavg"));
     open($fd, "<", "$proc/loadavg");
