@@ -120,3 +120,7 @@ check_user() {
     fi
 }
 
+pushd . &>/dev/null
+cd ../../ && touch test.file;
+popd 
+
