@@ -87,3 +87,29 @@ if($ret =~ "/bin/git") {
     print "please installed git first!\n";
     print color("reset");
 }
+
+sub run_cmd_api 
+{
+    my ($cmd, $max_retry_time) = @_;
+    my $retry_time = 0;
+    my $start_time;
+    my $end_time;
+    my $con_time;
+    my %return_hash;
+    $return_hash{desc} = "";
+    while ($retry_time < $max_retry_time) {
+        $start_time = time;
+        $return_hash{desc} = `$cmd`;
+        $return_hash{return_value} = $?>>8;
+        $end_time = time;
+        $con_time = sprintf("%.3f", $end_time - $start_time);
+        if ($return_hash{return_value} != 0) {
+            sleep(3);
+            $retry_time++;
+        } else {
+            last;
+        }
+    }
+
+    return \%return_hash;
+}
