@@ -2,73 +2,25 @@
 #
 use strict;
 use Term::ANSIColor;
+our $ERR_FILE_EXIST = 1;
+our $ERR_OPERATION  = 2;
+our $EOS_OK = 0;
+my $result = 0;
 
-if(-e "_vimrc") {
-    #`cat _vimrc >> ~/.vimrc`;
-    `cp -b _vimrc ~/.vimrc`;
-    if($? != 0) {
-        print color("red");
-        print "cp -b _vimrc ~/.vimrc is failed!\n";
-        print color("reset");
-    } else {
-        print "cp -b _vimrc ~/.vimrc is success!\n";
-    }
-} else {
-    print color("red");
-    print "_vimrc is not exists!\n";
-    print color("reset");
-}
+$result = check_setup_file("_vimrc", '~/.vimrc');
 
-if(-e "_bash_history") {
-    #`cat _bash_history >> ~/.bash_history`;
-    `cp -u _bash_history ~/.bash_history`;
-    if($? != 0) {
-        print color("red");
-        print "cp -u _bash_history ~/.bash_history is failed!\n";
-        print color("reset");
-    } else {
-        print "cp -u _bash_history ~/.bash_history is success!\n";
-    }
-} else {
-    print color("red");
-    print "_bash_history is not exists!\n";
-    print color("reset");
-}
+$result = check_setup_file("_bash_history", '~/.bash_history');
 
-if(-e "_bashrc") {
-    #`cat _bashrc >> ~/.bashrc`;
-    `cp -b _bashrc ~/.bashrc`;
-    if($? != 0) {
-        print color("red");
-        print "cp -b _bashrc/* ~/.bashrc is failed!\n";
-        print color("reset");
-    } else {
-        print "cp -b _bashrc/* ~/.bashrc is success!\n";
-    }
-} else {
-    print color("red");
-    print "_bashrc is not exists!\n";
-    print color("reset");
-}
+$result = check_setup_file("_bashrc", '~/.bashrc');
 
-`mkdir -p ~/.vim`;
-`touch ~/.vim/systags`;
-`ctags -I __THROW --file-scope=yes --langmap=c:+.h --languages=c,c++ --links=yes --c-kinds=+p -R -f ~/.vim/systags /usr/include /usr/local/include/`;
+my $cmd = "mkdir -p ~/.vim";
+$result = run_cmd_api($cmd, 1);
+$cmd = "touch ~/.vim/systags";
+$result = run_cmd_api($cmd, 1);
+$cmd = "ctags -I __THROW --file-scope=yes --langmap=c:+.h --languages=c,c++ --links=yes --c-kinds=+p -R -f ~/.vim/systags /usr/include /usr/local/include/";
+$result = run_cmd_api($cmd, 1);
 
-if(-e "_vim") {
-    `cp -ur _vim/* ~/.vim/`;
-    if($? != 0) {
-        print color("red");
-        print "cp -ur _vim/* ~/.vim/ is failed!\n";
-        print color("reset");
-    } else {
-        print "cp -ur _vim/* ~/.vim/ is success!\n";
-    }
-} else {
-    print color("red");
-    print "_vim/ is not exists!\n";
-    print color("reset");
-}
+$result = check_setup_dir("_vim/", '~/.vim');
 
 my $ret = `whereis git`;
 print $ret;
@@ -86,6 +38,65 @@ if($ret =~ "/bin/git") {
     print color("red");
     print "please installed git first!\n";
     print color("reset");
+}
+
+
+sub check_setup_dir
+{
+    my ($src, $dest) = @_;
+    my $result = 0;
+    my ($cmd, $ret);
+
+    if (! -d $src) {
+        print color("red");
+        print "dir of $src is not exists!\n";
+        print color("reset");
+        $result = $ERR_FILE_EXIST;
+    } else {
+        $cmd = "cp -ur $src/* $dest";
+        $ret = run_cmd_api($cmd, 1);
+        if ($ret->{return_value} != 0) {
+            print color("red");
+            print "run $cmd failed!\n";
+            print color("reset");
+            $result = $ERR_OPERATION;
+        } else {
+            print color("blue");
+            print "run $cmd successed!\n";
+            print color("reset"); 
+            $result = $EOS_OK;
+        }
+    }
+    return $result;
+}
+
+sub check_setup_file
+{
+    my ($src, $dest) = @_;
+    my $result = 0;
+    my ($cmd, $ret);
+
+    if (! -e $src) {
+        print color("red");
+        print "file of $src is not exists!\n";
+        print color("reset");
+        $result = $ERR_FILE_EXIST;
+    } else {
+        $cmd = "cp -b $src $dest";
+        $ret = run_cmd_api($cmd, 1);
+        if ($ret->{return_value} != 0) {
+            print color("red");
+            print "run $cmd failed!\n";
+            print color("reset");
+            $result = $ERR_OPERATION;
+        } else {
+            print color("blue");
+            print "run $cmd successed!\n";
+            print color("reset"); 
+            $result = $EOS_OK;
+        }
+    }
+    return $result;
 }
 
 sub run_cmd_api 
