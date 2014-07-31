@@ -2,9 +2,10 @@
 #
 use strict;
 use Term::ANSIColor;
+our $EOS_OK = 0;
 our $ERR_FILE_EXIST = 1;
 our $ERR_OPERATION  = 2;
-our $EOS_OK = 0;
+our $EOS_ERR = 3;
 my $result = 0;
 
 $result = check_setup_file("_vimrc", '~/.vimrc');
@@ -14,17 +15,17 @@ $result = check_setup_file("_bash_history", '~/.bash_history');
 $result = check_setup_file("_bashrc", '~/.bashrc');
 
 my $cmd = "mkdir -p ~/.vim";
-$result = run_cmd_api($cmd, 1);
+$result = run_and_check_result($cmd);
 $cmd = "touch ~/.vim/systags";
-$result = run_cmd_api($cmd, 1);
+$result = run_and_check_result($cmd);
 $cmd = "ctags -I __THROW --file-scope=yes --langmap=c:+.h --languages=c,c++ --links=yes --c-kinds=+p -R -f ~/.vim/systags /usr/include /usr/local/include/";
-$result = run_cmd_api($cmd, 1);
+$result = run_and_check_result($cmd);
 
 $result = check_setup_dir("_vim/", '~/.vim');
 
-my $ret = `whereis git`;
-print $ret;
-if($ret =~ "/bin/git") {
+$cmd = "whereis git";
+$result = run_cmd_api($cmd, 1);
+if($result->{return_value} == 0 and $result->{desc} =~ /\w+\/git/) {
     `git config --global alias.lg "log --color --graph --pretty=format:'%Cred%h%Creset-%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --";
      git config --global alias.st "status";
      git config --global alias.cfg "config";
@@ -40,6 +41,25 @@ if($ret =~ "/bin/git") {
     print color("reset");
 }
 
+sub run_and_check_result
+{
+    my ($cmd) = @_;
+    my ($result, $ret);
+
+    $ret = run_cmd_api($cmd, 1);
+    if ($ret->{return_value} != 0) {
+        print color("red");
+        print "run $cmd failed! $ret->{desc}\n";
+        print color("reset"); 
+        $result = $EOS_ERR;
+    } else {
+            print color("blue");
+            print "run $cmd successed!\n";
+            print color("reset"); 
+            $result = $EOS_OK; 
+    }
+    return $result;
+}
 
 sub check_setup_dir
 {
