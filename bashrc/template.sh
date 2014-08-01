@@ -124,3 +124,27 @@ pushd . &>/dev/null
 cd ../../ && touch test.file;
 popd 
 
+debug=1
+function log()
+{    
+        local epath=$(pwd)
+        local timestamp=$(date +%Y%m%d-%H:%M:%S)
+        #echo "#######################################################################"    
+        echo "[$timestamp][$epath]$1"  
+}
+
+function do_cmd()
+{    
+        log "[exec] $*   please wait............"
+        if [ $debug -eq 1 ];then    
+                $@    
+        else    
+                $@ >/dev/null 2>&1    
+        fi  
+        if [[ $? -ne 0 ]];then
+                log "[fail] $@" 
+                exit 1 
+        else
+                log "[succ] $@"
+        fi  
+}
