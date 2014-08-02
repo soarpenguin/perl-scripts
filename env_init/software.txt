@@ -21,6 +21,9 @@ iftop
 mysql-server
 mtr
 
+python-dev
+cmake
+
 libevent
 libevent-devel
 ncurses-devel
