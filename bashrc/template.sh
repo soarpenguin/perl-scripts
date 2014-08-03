@@ -127,24 +127,55 @@ popd
 debug=1
 function log()
 {    
-        local epath=$(pwd)
-        local timestamp=$(date +%Y%m%d-%H:%M:%S)
-        #echo "#######################################################################"    
-        echo "[$timestamp][$epath]$1"  
+    local epath=$(pwd)
+    local timestamp=$(date +%Y%m%d-%H:%M:%S)
+    #echo "##########################################################"
+    echo "[$timestamp][$epath]$1"
 }
 
 function do_cmd()
 {    
-        log "[exec] $*   please wait............"
-        if [ $debug -eq 1 ];then    
-                $@    
-        else    
-                $@ >/dev/null 2>&1    
-        fi  
-        if [[ $? -ne 0 ]];then
-                log "[fail] $@" 
-                exit 1 
-        else
-                log "[succ] $@"
-        fi  
+    log "[exec] $*   please wait............"
+    if [ $debug -eq 1 ];then
+        $@
+    else
+        $@ >/dev/null 2>&1
+    fi
+    if [[ $? -ne 0 ]];then
+        log "[fail] $@"
+        exit 1
+    else
+        log "[succ] $@"
+    fi
+}
+
+# root/bin   root/log
+function log_error()
+{
+    local ERRFILE=$(dirname $0)/../log/err.log
+    if [ -f ${ERRFILE} ]; then
+        echo $* >> ${ERRFILE}
+    else
+        echo $*
+    fi
+}
+
+function log_link()
+{
+    local LOGFILE=$(dirname $0)/../log/links.log
+    if [ -d $(dirname $LOGFILE) ]; then
+        echo $* >> ${LOGFILE}
+    else
+        echo $*
+    fi
+}
+
+function log_msg()
+{
+    local LOGFILE=$(dirname $0)/../log/msg.log
+    if [ -d $(dirname $LOGFILE) ]; then
+        echo $* >> ${LOGFILE}
+    else
+        echo $*
+    fi
 }
