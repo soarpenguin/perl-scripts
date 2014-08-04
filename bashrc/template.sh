@@ -179,3 +179,7 @@ function log_msg()
         echo $*
     fi
 }
+
+function command_exists {
+    hash "$1" 2>/dev/null ;
+}
