@@ -47,6 +47,7 @@ yum -y install gcc-c++
 yum -y install glibc
 yum -y install glibc-common
 yum -y install make
+yum -y update vi
 yum -y install vim
 yum -y install gvim
 yum -y install autoconf

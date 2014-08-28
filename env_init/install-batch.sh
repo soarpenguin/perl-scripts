@@ -63,6 +63,7 @@ aptitude -y install autoconf
 aptitude -y install automake
 aptitude -y install bin86
 aptitude -y install build-essential
+aptitude -y update vi
 aptitude -y install vim
 aptitude -y install vim-gnome
 aptitude -y install ctags
