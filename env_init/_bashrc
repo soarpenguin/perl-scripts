@@ -83,8 +83,13 @@ alias lsc='screen -ls'
 alias la='ls -A'
 alias l='ls -CF'
 alias gvim='gvim -geom 85x55'
-alias gopen='gnome-open'
 alias cl='clear'
+
+if [ -x /usr/bin/nautilus ]; then
+    alias open='nautilus'
+elif [ -x /usr/bin/gnome-open ]; then
+    alias open='gnome-open'
+fi
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like
