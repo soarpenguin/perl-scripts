@@ -1,0 +1,70 @@
+
+# The number of jobs to pass to tools that can run in parallel (such as make
+# and dpkg-buildpackage
+if [[ -z ${NUM_JOBS} ]]; then
+  NUM_JOBS=$(grep -c "^processor" /proc/cpuinfo)
+fi
+# Ensure that any sub scripts we invoke get the max proc count.
+export NUM_JOBS
+
+# Make sure we have the location and name of the calling script, using
+# the current value if it is already set.
+: ${SCRIPT_LOCATION:=$(dirname "$(readlink -f "$0")")}
+: ${SCRIPT_NAME:=$(basename "$0")}
+
+# Determine and set up variables needed for fancy color output (if supported).
+V_BOLD_RED=
+V_BOLD_GREEN=
+V_BOLD_YELLOW=
+V_REVERSE=
+V_VIDOFF=
+
+if tput colors >&/dev/null; then
+  # order matters: we want VIDOFF last so that when we trace with `set -x`,
+  # our terminal doesn't bleed colors as bash dumps the values of vars.
+  V_BOLD_RED=$(tput bold; tput setaf 1)
+  V_BOLD_GREEN=$(tput bold; tput setaf 2)
+  V_BOLD_YELLOW=$(tput bold; tput setaf 3)
+  V_REVERSE=$(tput rev)
+  V_VIDOFF=$(tput sgr0)
+fi
+
+# Declare these asap so that code below can safely assume they exist.
+_message() {
+  local prefix="$1${CROS_LOG_PREFIX:-${SCRIPT_NAME}}"
+  shift
+  if [[ $# -eq 0 ]]; then
+    echo -e "${prefix}:${V_VIDOFF}" >&2
+    return
+  fi
+  (
+    # Handle newlines in the message, prefixing each chunk correctly.
+    # Do this in a subshell to avoid having to track IFS/set -f state.
+    IFS="
+"
+    set +f
+    set -- $*
+    IFS=' '
+    if [[ $# -eq 0 ]]; then
+      # Empty line was requested.
+      set -- ''
+    fi
+    for line in "$@"; do
+      echo -e "${prefix}: ${line}${V_VIDOFF}" >&2
+    done
+  )
+}
+
+info() {
+  _message "${V_BOLD_GREEN}INFO    " "$*"
+}
+
+warn() {
+  _message "${V_BOLD_YELLOW}WARNING " "$*"
+}
+
+error() {
+  _message "${V_BOLD_RED}ERROR   " "$*"
+}
+
+error "Bad news"
