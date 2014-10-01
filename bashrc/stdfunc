@@ -9,6 +9,10 @@ fi
 # Ensure that any sub scripts we invoke get the max proc count.
 export NUM_JOBS
 
+pidof() {
+    ps acx | egrep -i $@ | awk '{print $1}'
+}
+
 # Make sure we have the location and name of the calling script, using
 # the current value if it is already set.
 #: ${SCRIPT_LOCATION:=$(dirname "$(readlink -f "$0")")}
