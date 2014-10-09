@@ -1,19 +1,184 @@
 #!/bin/env bash
 
-#export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }';
-#curdir=$(cd `dirname $0`; pwd);
+#export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+#curdir=$(cd `dirname $0`; pwd)
 
 set -x
 export PS4='+ [`basename ${BASH_SOURCE[0]}`:$LINENO ${FUNCNAME[0]} \D{%F %T} $$ ] '
-#export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }';
-curdir=$(cd "$(dirname "$0")"; pwd);
-curdir=$(dirname $(readlink -f "$0"));
+#export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+curdir=$(cd "$(dirname "$0")"; pwd)
+#curdir=$(dirname $(readlink -f "$0")) #bad use under darwin
 
 MYNAME="${0##*/}"
 report_err() { echo "${MYNAME}: Error: $*" >&2 ; }
 
 cleanup() { rm -f "tmp.*" ; }
 trap cleanup EXIT
+
+#
+# Auto-detect the package manager.
+#
+if   command -v apt-get >/dev/null; then package_manager="apt"
+elif command -v yum     >/dev/null; then package_manager="yum"
+elif command -v port    >/dev/null; then package_manager="port"
+elif command -v brew    >/dev/null; then package_manager="brew"
+elif command -v pacman  >/dev/null; then package_manager="pacman"
+fi
+
+#
+# Auto-detect the downloader.
+#
+if   command -v wget >/dev/null; then downloader="wget"
+elif command -v curl >/dev/null; then downloader="curl"
+fi
+
+function install_packages()
+{
+	case "$package_manager" in
+		apt)	$sudo apt-get install -y $* || return $? ;;
+		yum)	$sudo yum install -y $* || return $?     ;;
+		port)   $sudo port install $* || return $?       ;;
+		brew)
+			local brew_owner="$(/usr/bin/stat -f %Su "$(command -v brew)")"
+			sudo -u "$brew_owner" brew install $* ||
+			sudo -u "$brew_owner" brew upgrade $* || return $?
+			;;
+		pacman)
+			local missing_pkgs="$(pacman -T $*)"
+
+			if [[ -n "$missing_pkgs" ]]; then
+				$sudo pacman -S $missing_pkgs || return $?
+			fi
+			;;
+		"")	_warning "Could not determine Package Manager. Proceeding anyway." ;;
+	esac
+}
+
+#
+# Downloads a URL.
+#
+function download()
+{
+	local url="$1"
+	local dest="$2"
+
+	[[ -d "$dest" ]] && dest="$dest/${url##*/}"
+	[[ -f "$dest" ]] && return
+
+	case "$downloader" in
+		wget) wget -c -O "$dest.part" "$url" || return $?         ;;
+		curl) curl -f -L -C - -o "$dest.part" "$url" || return $? ;;
+		"")
+			_print_fatal "Could not find wget or curl"
+			return 1
+			;;
+	esac
+
+	mv "$dest.part" "$dest" || return $?
+}
+
+#
+# Extracts an archive.
+#
+function extract()
+{
+	local archive="$1"
+	local dest="${2:-${archive%/*}}"
+
+	case "$archive" in
+		*.tgz|*.tar.gz) tar -xzf "$archive" -C "$dest" || return $? ;;
+		*.tbz|*.tbz2|*.tar.bz2)	tar -xjf "$archive" -C "$dest" || return $? ;;
+		*.zip) unzip "$archive" -d "$dest" || return $? ;;
+		*)
+			_print_fatal "Unknown archive format: $archive"
+			return 1
+			;;
+	esac
+}
+
+#
+# Prints usage information.
+#
+function usage()
+{
+	cat <<USAGE
+usage: command.sh [OPTIONS] [xxx [VERSION] [-- CONFIGURE_OPTS ...]]
+
+Options:
+
+	-m, --md5 MD5		MD5 checksum of the archive
+	--no-download		Use the previously downloaded archive
+	-V, --version		Prints the version
+	-h, --help		    Prints this message
+
+Examples:
+
+	$ command.sh -V
+
+USAGE
+}
+
+#
+# Parses command-line options.
+#  usage: parse_options "$@" || exit $?
+#
+function parse_options()
+{
+	local argv=()
+
+	while [[ $# -gt 0 ]]; do
+		case $1 in
+			-m|--md5)
+				md5="$2"
+				shift 2
+				;;
+			--no-download)
+				no_download=1
+				shift
+				;;
+			-V|--version)
+				_print_fatal "$0: $version"
+				exit
+				;;
+			-h|--help)
+				usage
+				exit
+				;;
+			--)
+				shift
+				configure_opts=("$@")
+				break
+				;;
+			-*)
+				_print_fatal "command line: unrecognized option $1" >&2
+				return 1
+				;;
+			*)
+				argv+=($1)
+				shift
+				;;
+		esac
+	done
+
+	case ${#argv[*]} in
+		2)
+			software="${argv[0]}"
+			version="${argv[1]}"
+			;;
+		1)
+			software="${argv[0]}"
+			version=""
+			;;
+		0)
+			usage 1>&2
+			return 1
+			;;
+		*)
+			usage 1>&2
+			return 1
+			;;
+	esac
+}
 
 #tar -cf - ./* | ( cd "${dir}" && tar -xf - )
 #if [[ "${PIPESTATUS[0]}" -ne 0 || "${PIPESTATUS[1]}" -ne 0 ]]; then
