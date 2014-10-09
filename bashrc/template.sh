@@ -289,6 +289,13 @@ pushd . &>/dev/null
 cd ../../ && touch test.file;
 popd 
 
+try() {
+    "$@"
+    if [ $? -ne 0 ]; then
+        _fatal "Command failure: $@"
+    fi
+}
+
 debug=1
 function log()
 {    
