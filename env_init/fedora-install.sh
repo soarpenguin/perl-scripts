@@ -1,7 +1,7 @@
 #!/bin/bash
 
 AUTO_INVOKE_SUDO=yes;
-curdir=$(dirname $(readlink -f $0));
+curdir=$(cd "$(dirname "$0")"; pwd)
 
 function invoke_sudo() 
 {
@@ -19,6 +19,19 @@ uid=`id -u`
 if [ $uid -ne '0' ]; then 
     invoke_sudo root "${curdir}/$0 $@"
 fi
+
+for cmd in apt-get yum port brew pacman; do
+    if command -v $cmd >/dev/null; then
+        package_manager="$cmd"
+        break
+    fi
+done
+
+if [ x"$package_manager" = "x" ]; then
+    echo "Get install cmd failed."
+    exit 1
+fi
+
 #------------------------------------------------------------------------------
 # Prerequisites
 #------------------------------------------------------------------------------
@@ -27,54 +40,54 @@ fi
 # Install
 #------------------------------------------------------------------------------
 # Communications
-#yum -y install irssi
-#yum -y install thunderbird
+#$package_manager -y install irssi
+#$package_manager -y install thunderbird
 
 # Graphics
-#yum -y install gcolor2
-#yum -y install inkscape
-#yum -y install gimp
+#$package_manager -y install gcolor2
+#$package_manager -y install inkscape
+#$package_manager -y install gimp
 
 # Internet
-#yum -y install deluge
+#$package_manager -y install deluge
 
 # Productivity
-#yum -y install gedit-plugins
+#$package_manager -y install gedit-plugins
 
 # Development
-yum -y install gcc
-yum -y install gcc-c++
-yum -y install glibc
-yum -y install glibc-common
-yum -y install make
-yum -y update vi
-yum -y install vim
-yum -y install gvim
-yum -y install autoconf
-yum -y install automake
-yum -y install libtool
-yum -y install ddd
-yum -y install valgrind
-yum -y install ctags
-yum -y install cscope
-yum -y install git
-yum -y install gitk
-yum -y install svn
-yum -y install mysql-server
+$package_manager -y install gcc
+$package_manager -y install gcc-c++
+$package_manager -y install glibc
+$package_manager -y install glibc-common
+$package_manager -y install make
+$package_manager -y update vi
+$package_manager -y install vim
+$package_manager -y install gvim
+$package_manager -y install autoconf
+$package_manager -y install automake
+$package_manager -y install libtool
+$package_manager -y install ddd
+$package_manager -y install valgrind
+$package_manager -y install ctags
+$package_manager -y install cscope
+$package_manager -y install git
+$package_manager -y install gitk
+$package_manager -y install svn
+$package_manager -y install mysql-server
 
-yum -y install libevent
-yum -y install libevent-devel
-yum -y install ncurses-devel
-yum -y install perf
-yum -y install sysstat
-yum -y install screen
-yum -y install strace
-#yum -y install arduino
-#yum -y install eclipse-jdt
-#yum -y install python-pip
+$package_manager -y install libevent
+$package_manager -y install libevent-devel
+$package_manager -y install ncurses-devel
+$package_manager -y install perf
+$package_manager -y install sysstat
+$package_manager -y install screen
+$package_manager -y install strace
+#$package_manager -y install arduino
+#$package_manager -y install eclipse-jdt
+#$package_manager -y install python-pip
 
 # System
-#yum -y install gparted
+#$package_manager -y install gparted
 
 #------------------------------------------------------------------------------
 # Firefox addons
