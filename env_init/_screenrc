@@ -19,7 +19,7 @@ defscrollback 10000
 defencoding GBK
 encoding UTF-8 GBK
 
-#(Y65:6Bdetach
+#断线的时候自动detach
 autodetach on
 
 hardstatus alwayslastline
