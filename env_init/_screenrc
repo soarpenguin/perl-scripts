@@ -16,10 +16,11 @@ setenv TERM xlinux
 #use ` as the Global Key
 defscrollback 10000
 
-defencoding GBK
+defutf8 on
+defencoding UTF-8
 encoding UTF-8 GBK
 
-#断线的时候自动detach
+#auto detach when offline.
 autodetach on
 
 hardstatus alwayslastline
