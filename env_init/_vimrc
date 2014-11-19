@@ -426,3 +426,5 @@ source $VIMRUNTIME/menu.vim
 :map \9 bi(<Esc>ea)<Esc>
 :map \[ bi[<Esc>ea]<Esc>
 :map \{ bi{<Esc>ea}<Esc>
+
+"autocmd VimLeave /var/www/html/xxx.php exe "! /bin/bash /opt/check.sh"

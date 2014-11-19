@@ -10,13 +10,17 @@ bindkey -k k4 screen
 bindkey -k k5 detach
 # bind F8 to enter copy mode
 bindkey -k k8 copy
-term linux
-setenv LC_CTYPE zh_CN.GBK
-setenv TERM linux
+term xlinux
+#setenv LC_CTYPE zh_CN.GBK
+setenv TERM xlinux
 #use ` as the Global Key
 defscrollback 10000
 
-#断线的时候自动detach
+defutf8 on
+defencoding UTF-8
+encoding UTF-8 GBK
+
+#auto detach when offline.
 autodetach on
 
 hardstatus alwayslastline
