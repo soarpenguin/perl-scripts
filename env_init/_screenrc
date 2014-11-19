@@ -37,3 +37,10 @@ screen bash
 screen bash
 screen bash
 screen bash
+
+#usage for screenrc
+#screen -c ~/screenrc -D -RR sname
+#screen -drUA sname
+#
+#For kill dead session window.
+#Ctrl+a K or Ctrl+a Ctrl+k
