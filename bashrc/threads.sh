@@ -137,8 +137,21 @@ done
 unset HOST
 while read -r HOST
 do
+    if [ "x$HOST" = "x" ]; then
+        _print_fatal "null string for hostname."
+        continue
+    fi
+
     _trace "start  ${HOST} ......"
     read <&9
+
+    ping -c 1 -w 3 ${HOST} &>/dev/null
+
+    if [ $? -ne 0 ]; then
+        _print_fatal "Error: $HOST is unreachable."
+        echo >&9
+        continue
+    fi
 
     port=22
     (${SSH} "${HOST}" "-p ${port}" "${g_CMD}" &>${curdir}/log/${HOST}; echo >&9) &
