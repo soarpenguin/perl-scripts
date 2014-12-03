@@ -10,6 +10,7 @@ curdir=$(cd "$(dirname "$0")"; pwd);
 
 g_HOST_LIST=$1
 g_THREAD_NUM=300
+g_PORT=22
 tmp_file="pipe.$$"
 SSH="ssh -n -o PasswordAuthentication=no -o StrictHostKeyChecking=no -o ConnectTimeout=5 "
 SCP='scp -q -r -o PasswordAuthentication=no -o StrictHostKeyChecking=no -o ConnectTimeout=5 '
@@ -44,6 +45,7 @@ Usage: bash ${MYNAME} [options] hostlist command.
 Options:
     -c, --concurrent num  Thread Nummber for run the command at same time, default: 1.
     -s, --ssh             Use ssh authorized_keys to login without password query from DB.
+    -p, --port            Use port instead of defult port:22.
     -h, --help            Print this help infomation.
 
 Require:
@@ -74,6 +76,10 @@ function parse_options()
             -s|--ssh)
                 g_NOPASSWD=1
             	shift
+            	;;
+            -p|--port)
+                g_PORT=${2}
+            	shift 2
             	;;
             -h|--help)
             	usage
@@ -123,11 +129,14 @@ mkdir -p log
 mkfifo ${tmp_file}
 exec 9<>${tmp_file}
 
-#trap "rm -f ${tmp_file}; exit" INT TERM EXIT  
+#trap "rm -f ${tmp_file}; exit" INT TERM EXIT
 cleanup() { rm -f "${tmp_file}" ; }
 trap cleanup EXIT TERM EXIT;
 
 #trap 'rm -f "${tmp_file}"; exit $?' INT TERM EXIT
+_trace "You run command: $HL_BLUE $g_CMD $NORMAL"
+_trace "Notice:(${HL_RED}Ctrl+C for cancel,${NORMAL} ENTER for continue, wait for 30s continue auto.)"
+read -t 30 word   # wait for 30 sec for waiting input.
 
 for ((i=0;i<${g_THREAD_NUM};i++))
 do
@@ -153,8 +162,7 @@ do
         continue
     fi
 
-    port=22
-    (${SSH} "${HOST}" "-p ${port}" "${g_CMD}" &>${curdir}/log/${HOST}; echo >&9) &
+    (${SSH} "${HOST}" "-p ${g_PORT}" "${g_CMD}" &>${curdir}/log/${HOST}; echo >&9) &
     #(${SSH} ${HOST} "ls "  &>  log/${HOST}; echo >&9) &
 
 done < ${g_HOST_LIST}
