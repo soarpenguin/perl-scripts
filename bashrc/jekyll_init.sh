@@ -41,7 +41,8 @@ else
     _trace "ruby is installed. version: $version"
 fi
 
-_trace "update source of ruby."
+_trace "add source of ruby https://ruby.taobao.org/."
+result=`gem sources --remove https://rubygems.org/`
 result=`gem sources -a https://ruby.taobao.org/`
 _trace "gem suouces add result: $result"
 #gem sources -l
