@@ -1,8 +1,12 @@
-#!/bin/bash
-export PS4='$0.$LINENO+ '
+#!/usr/bin/env bash
+
+#set -x
+export PS4='+ [`basename ${BASH_SOURCE[0]}`:$LINENO ${FUNCNAME[0]} \D{%F %T} $$ ] '
 
 AUTO_INVOKE_SUDO=yes
 curdir=$(cd "$(dirname "$0")"; pwd)
+#script=$(basename "$0")
+script="${0##*/}"
 
 ##################### function #########################
 report_err() { echo "${MYNAME}: Error: $*" >&2 ; }
@@ -31,10 +35,9 @@ function lowercase() {
     echo "$1" | sed "y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/"
 }
 
-function invoke_sudo() 
-{
+function invoke_sudo() {
     if [ "`id -u`" != "`id -u $1`" ]; then
-        echo "`whoami`:you need to be $1 privilege to run this script.";
+        _trace "`whoami`:you need to be $1 privilege to run this script.";
         if [ "$AUTO_INVOKE_SUDO" == "yes" ]; then 
             _trace "Invoking sudo ...";
             sudo -u "#`id -u $1`" sh -c "$2";
@@ -45,7 +48,7 @@ function invoke_sudo()
 
 #################### main route ########################
 OS=`uname`
-
+OS=`lowercase $OS`
 if [ "$OS" != "darwin" ]; then
     _print_fatal "Not darwin, this script just for mac env init."
     exit 1
@@ -54,14 +57,14 @@ fi
 
 uid=`id -u`
 if [ $uid -ne '0' ]; then 
-  invoke_sudo root "${curdir}/$0 $@"
+    invoke_sudo root "${curdir}/$script $@"
 fi
 
 # Check for Homebrew,
 # Install if we don't have it
 if test ! $(which brew); then
-  _trace "Installing homebrew..."
-  ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    _trace "Installing homebrew..."
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 fi
 
 # Update homebrew recipes
