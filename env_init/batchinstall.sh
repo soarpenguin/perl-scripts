@@ -8,6 +8,8 @@ export PS4='+ [`basename ${BASH_SOURCE[0]}`:$LINENO ${FUNCNAME[0]} \D{%F %T} $$ 
 MYNAME="${0##*/}"
 curdir=$(cd "$(dirname "$0")"; pwd);
 
+OS=`uname`
+OS=$(echo "$OS" | sed "y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/")
 g_LIST=$1
 
 ##################### function #########################
@@ -44,8 +46,6 @@ _readlink() {
         echo ""
     fi
 
-    OS=`uname`
-    OS=`lowercase $OS`
     if [ "$OS" = "darwin" ]; then
         filename="${file##*/}"
         filedir=$(cd "$(dirname "$file")"; pwd);
@@ -117,12 +117,14 @@ AUTO_INVOKE_SUDO=yes
 function invoke_sudo() 
 {
     if [ "`id -u`" != "`id -u $1`" ]; then
-        echo "`whoami`:you need to be $1 privilege to run this script.";
+        _trace "`whoami`:you need to be $1 privilege to run this script.";
         if [ "$AUTO_INVOKE_SUDO" == "yes" ]; then 
             _trace "Invoking sudo ...";
             sudo -u "#`id -u $1`" bash -c "$2";
         fi
-        #exit 0;
+        if [ "$OS" != "darwin" ]; then
+            exit 0;
+        fi
     fi
 }
 
