@@ -37,7 +37,7 @@ function lowercase() {
     echo "$1" | sed "y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/"
 }
 
-readlink() {
+_readlink() {
     file=$1
 
     if [ "x$file" = "x" ]; then
@@ -104,7 +104,7 @@ function parse_options()
 
     case ${#argv[@]} in
         1)
-            g_LIST=$(readlink "${argv[0]}")
+            g_LIST=$(_readlink "${argv[0]}")
             ;;
         0|*)
             usage 1>&2
