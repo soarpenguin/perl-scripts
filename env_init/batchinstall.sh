@@ -33,6 +33,30 @@ _print_fatal() {
     echo $(_hl_red '==>') "$@" >&2
 }
 
+function lowercase() {
+    echo "$1" | sed "y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/"
+}
+
+readlink() {
+    file=$1
+
+    if [ "x$file" = "x" ]; then
+        echo ""
+    fi
+
+    OS=`uname`
+    OS=`lowercase $OS`
+    if [ "$OS" = "darwin" ]; then
+        filename="${file##*/}"
+        filedir=$(cd "$(dirname "$file")"; pwd);
+
+        echo "$filedir/$filename"
+    else
+        echo $(readlink -f $file)
+    fi
+
+}
+
 usage() {
     cat << USAGE
 Usage: bash ${MYNAME} [options] software.
@@ -80,7 +104,7 @@ function parse_options()
 
     case ${#argv[@]} in
         1)
-            g_LIST=$(readlink -f "${argv[0]}")
+            g_LIST=$(readlink "${argv[0]}")
             ;;
         0|*)
             usage 1>&2
@@ -98,7 +122,7 @@ function invoke_sudo()
             _trace "Invoking sudo ...";
             sudo -u "#`id -u $1`" bash -c "$2";
         fi
-        exit 0;
+        #exit 0;
     fi
 }
 
