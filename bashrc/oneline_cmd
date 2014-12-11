@@ -3,3 +3,6 @@ netstat -pant | awk '/^tcp/ {++state[$6]} END {for(key in state) printf("%-10s\t
 
 # one line cmd display dir file.
 ls -lR | grep -v total | awk 'BEGIN { OFS="\t"; ORS="\n-->"} {print $1,$3,$NF}'
+
+# one line cmd display tcp/ip info.
+ss --options --extended --memory --processes --info
