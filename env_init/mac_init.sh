@@ -32,7 +32,7 @@ _print_fatal() {
 }
 
 function lowercase() {
-    echo "$1" | sed "y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/"
+    echo "$1" | tr '[A-Z]' '[a-z]'
 }
 
 function invoke_sudo() {
@@ -47,13 +47,11 @@ function invoke_sudo() {
 }
 
 #################### main route ########################
-OS=`uname`
-OS=`lowercase $OS`
+OS=`uname | tr '[A-Z]' '[a-z]'`
 if [ "$OS" != "darwin" ]; then
     _print_fatal "Not darwin, this script just for mac env init."
     exit 1
 fi
-
 
 uid=`id -u`
 if [ $uid -ne '0' ]; then 

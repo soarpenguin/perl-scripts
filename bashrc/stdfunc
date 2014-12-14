@@ -324,6 +324,14 @@ which_python() {
     exit 1
 }
 
+lowercase() {
+    echo "$1" | tr '[A-Z]' '[a-z]'
+}
+
+uppercase() {
+    echo "$1" | tr '[a-z]' '[A-Z]'
+}
+
 assert_not_root_user
 assert_root_user
 error "Bad news"

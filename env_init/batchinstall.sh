@@ -9,7 +9,7 @@ MYNAME="${0##*/}"
 curdir=$(cd "$(dirname "$0")"; pwd);
 
 OS=`uname`
-OS=$(echo "$OS" | sed "y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/")
+OS=$(echo "$OS" | tr '[A-Z]' '[a-z]')
 g_LIST=$1
 
 ##################### function #########################
@@ -36,7 +36,7 @@ _print_fatal() {
 }
 
 function lowercase() {
-    echo "$1" | sed "y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/"
+    echo "$1" | tr '[A-Z]' '[a-z]'
 }
 
 _readlink() {
