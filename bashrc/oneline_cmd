@@ -9,3 +9,13 @@ ss --options --extended --memory --processes --info
 
 #tcpdump
 tcpdump tcp and src 192.168.0.1 and port 80
+
+#iptables
+iptables -A INPUT -p tcp --dport 80 -m time --timestart 09:00 --timestop 18:00 -j DROP
+iptables -A INPUT -s 192.168.1.0/24 -p tcp --dport 22 -j ACCEPT
+iptables -t filter -A INPUT -s 192.168.1.1 -j DROP
+#-t --table: table(filter, nat, mangle, raw)
+#-A -D -I -R: chain
+#match regx
+#action (ACCEPT, DROP, REJECT)
+
