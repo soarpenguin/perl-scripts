@@ -19,3 +19,14 @@ iptables -t filter -A INPUT -s 192.168.1.1 -j DROP
 #match regx
 #action (ACCEPT, DROP, REJECT)
 
+#RAID0
+mdadm -C /dev/md0 -a yes -l 0 -n 2 /dev/sdb /dev/sdc
+mdadm -D --scan > /etc/mdadm.conf
+mkfs.ext4 /dev/md0
+mount /dev/md0 /mnt
+
+#mdadm -C /dev/md0 -a yes -l 1 -n 2 /dev/sdb /dev/sdc
+#mdadm -C /dev/md0 -a yes -l 5 -n 3 /dev/sdb /dev/sdc /dev/sdd
+#mdadm -C /dev/md0 -a yes -l 5 -n 3 -x 1 /dev/sdb /dev/sdc /dev/sdd /dev/sde
+#-x 1: /dev/sde is backup disk when error happen.
+#mdadm -C /dev/md0 -a yes -l 6 -n 4 /dev/sdb /dev/sdc /dev/sdd /dev/sde
