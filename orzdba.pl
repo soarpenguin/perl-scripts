@@ -51,7 +51,8 @@ my $count ;            # -C   : times
 my $logfile ;          # -L   : logfile
 my $logfile_by_day ;   # -logfile_by_day : one day a logfile
 my $net;               # -n   : print net info
-my $port = 3306;       # -P
+my $port   = 3306;     # -P
+my $passwd = "";       # -p
 my $socket     ;       # -S
 my $dbrt = 0;          # -rt
 my $tcprstat_dir = "/tmp";
@@ -159,6 +160,7 @@ $SIG{INT} = \&catch_zap;
 #
 my $MYSQL    = qq{mysql -s --skip-column-names -uroot -P$port };
 $MYSQL      .= qq{-S$socket } if defined $socket;
+$MYSQL      .= qq{-p$passwd } if( defined $passwd and $passwd ne "");
 my $TCPRSTAT = "/usr/bin/tcprstat --no-header -t 1 -n 0 -p $port";
 
 &print_title();
@@ -250,6 +252,7 @@ Command line options :
    -n,--net            Print Net  Info.
 
    -P,--port           Port number to use for mysql connection(default 3306).
+   -p,--passwd         Password of user for mysql connection(default null).
    -S,--socket         Socket file to use for mysql connection.
 
    -com                Print MySQL Status(Com_select,Com_insert,Com_update,Com_delete).
@@ -296,7 +299,7 @@ sub get_options{
                         'd|disk=s',         # IN  : print disk info
                         'n|net=s',          # IN  : print info
                         's|swap',           # OUT : print swap info
-                        'com',              # OUT : print mysql status
+                        'cm',              # OUT : print mysql status
                         'innodb_rows',      # OUT : Print Innodb Rows Status
                         'innodb_pages',     # OUT : Print Innodb Buffer Pool Pages Status
                         'innodb_data',      # OUT : Print Innodb Data Status
@@ -309,6 +312,7 @@ sub get_options{
                         'hit',              # OUT : Print Innodb Hit%
                         'mysql',            # OUT : Print mysql info
                         'P|port=i',         # IN  : port
+                        'p|passwd=s',       # IN  : password
                         'S|socket=s',       # IN  : socket
                         'C|count=i',        # IN  : times
                         'L|logfile=s',      # IN  : path of logfile
@@ -337,6 +341,7 @@ sub get_options{
         $opt{'hit'} and $innodb_hit = 1 and $mysql = 1;
         $opt{'s'}   and $swap = 1;
         $opt{'P'}   and $port = $opt{'P'};
+        $opt{'p'}   and $passwd = $opt{'p'};
         $opt{'S'}   and $socket = $opt{'S'};
         $opt{'sys'} and $load= 1 and $cpu=1 and $timeFlag=1 and $swap = 1;
         $opt{'innodb_rows'}   and $innodb_rows = 1   and $mysql = 1;
