@@ -6,7 +6,7 @@ export PS4='+ [`basename ${BASH_SOURCE[0]}`:$LINENO ${FUNCNAME[0]} \D{%F %T} $$ 
 #export PATH
 
 MYNAME="${0##*/}"
-curdir=$(cd "$(dirname "$0")"; pwd);
+CURDIR=$(cd "$(dirname "$0")"; pwd);
 
 OS=`uname`
 OS=$(echo "$OS" | tr '[A-Z]' '[a-z]')
@@ -35,7 +35,7 @@ _print_fatal() {
     echo $(_hl_red '==>') "$@" >&2
 }
 
-function lowercase() {
+_lowercase() {
     echo "$1" | tr '[A-Z]' '[a-z]'
 }
 
@@ -74,9 +74,9 @@ USAGE
 
 #
 # Parses command-line options.
-#  usage: parse_options "$@" || exit $?
+#  usage: _parse_options "$@" || exit $?
 #
-function parse_options()
+_parse_options()
 {
     declare -a argv
 
@@ -114,7 +114,7 @@ function parse_options()
 }
 
 AUTO_INVOKE_SUDO=yes
-function invoke_sudo() 
+_invoke_sudo() 
 {
     if [ "`id -u`" != "`id -u $1`" ]; then
         _trace "`whoami`:you need to be $1 privilege to run this script.";
@@ -130,11 +130,11 @@ function invoke_sudo()
 
 uid=`id -u`
 if [ $uid -ne '0' ]; then 
-    invoke_sudo root "${curdir}/$0 $@"
+    _invoke_sudo root "${CURDIR}/$0 $@"
 fi
 
 ################################## main route #################################
-parse_options "${@}" || usage
+_parse_options "${@}" || usage
 
 if [ ! -e $g_LIST ]; then
     _print_fatal "Software list file $g_LIST is not exist."

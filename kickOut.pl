@@ -1,4 +1,4 @@
-#!/bin/env perl
+#!/usr/bin/env perl
 
 # kickOut.pl -- a tool script for kicked out the users. {{{1
 #   use the cmd "w" and "who am i" get user info.
