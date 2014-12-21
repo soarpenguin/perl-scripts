@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 if [ $# -ne 2 ]; then
     echo "$0 delfile sourcefile"

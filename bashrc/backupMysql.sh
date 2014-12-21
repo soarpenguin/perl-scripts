@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # backupMysql.sh: backup mysql databases and keep newest 5 days backup.
 #   restore db(test) use the follow command:
 #   $ gzip < test.2014-04-09.gz | /home/mysql/mysql/bin/mysqldump -uroot -p test

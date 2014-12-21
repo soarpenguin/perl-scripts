@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 for pid in `ls /proc/ | grep "^[0-9]"`
 do

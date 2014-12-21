@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
  
 # lock dirs/files
 LOCKDIR="/tmp/statsgen-lock"
