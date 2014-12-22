@@ -30,3 +30,7 @@ mount /dev/md0 /mnt
 #mdadm -C /dev/md0 -a yes -l 5 -n 3 -x 1 /dev/sdb /dev/sdc /dev/sdd /dev/sde
 #-x 1: /dev/sde is backup disk when error happen.
 #mdadm -C /dev/md0 -a yes -l 6 -n 4 /dev/sdb /dev/sdc /dev/sdd /dev/sde
+
+#mysql
+#mysql -u* -h* -p -P3306 -e “show databases” | sed -n '2,$p' | xargs -l DB 'mysqldump DB > DB.sql';
+
