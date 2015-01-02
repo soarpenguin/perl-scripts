@@ -9,6 +9,10 @@ ss --options --extended --memory --processes --info
 
 #tcpdump
 tcpdump tcp and src 192.168.0.1 and port 80
+tcpdump -i eth0 port 80 -w -
+
+#tcpflow
+tcpflow -cp -i eth0 "port 80"
 
 #iptables
 iptables -A INPUT -p tcp --dport 80 -m time --timestart 09:00 --timestop 18:00 -j DROP
