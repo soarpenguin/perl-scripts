@@ -21,20 +21,30 @@ _print_fatal() {
     echo $(_hl_red '==>') "$@" >&2
 }
 
+_fatal() {
+    echo $(_hl_red '==>') "$@" >&2
+    exit 1
+}
 
 ########## main route ############
+for cmd in apt-get yum port brew pacman; do
+    if command -v $cmd >/dev/null; then
+        package_manager="$cmd"
+        break
+    fi
+done
 
 ## check ruby env
 result=`which ruby`
 if [ "x$result" = 'x' ]; then
     _trace "ruby is not installed, now install ruby."
-    sudo brew install ruby
+    sudo $package_manager install ruby
+    sudo $package_manager install rubygems
 
     if [ $? -eq 0 ]; then
         _trace "install ruby successed."
     else
-        _print_fatal "install ruby failed!"
-        exit 1
+        _fatal "install ruby failed!"
     fi
 else
     version=`ruby --version`
@@ -53,8 +63,7 @@ gem install bundler
 if [ -d ".git/" ]; then
     bundle install
 else
-    _print_fatal "Not a git repository."
-    exit 1
+    _fatal "Not a git repository."
 fi
 
 bundle exec jekyll serve

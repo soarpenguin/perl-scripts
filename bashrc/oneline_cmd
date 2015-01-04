@@ -15,6 +15,10 @@ ss -an | grep "TIME-WAIT" | awk '{print $NF}' | grep -P "^(\d+\.){3}(\d+):\d+$" 
 tcpdump tcp and src 192.168.0.1 and port 80
 # 0x4745 : [GE]T -- 0x4854 : [HT]TP
 tcpdump  -XvvennSs 0 -i eth0 tcp[20:2]=0x4745 or tcp[20:2]=0x4854
+tcpdump -i eth0 port 80 -w -
+
+#tcpflow
+tcpflow -cp -i eth0 "port 80"
 
 #iptables
 iptables -A INPUT -p tcp --dport 80 -m time --timestart 09:00 --timestop 18:00 -j DROP
