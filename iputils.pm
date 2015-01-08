@@ -1,4 +1,4 @@
-#!/bin/env perl
+#!/usr/bin/env perl
 #
 # Author: soarpenguin <soarpenguin@gmail.com>
 # First release Jan.3 2014

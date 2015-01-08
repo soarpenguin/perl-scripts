@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 CONFFILE="update.conf";
 OLDCONFFILE="oldupdate.conf";
