@@ -1,6 +1,11 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 一般设定
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" 将 pathogen 自身也置于独立目录中，需指定其路径 
+runtime bundle/pathogen/autoload/pathogen.vim
+" 运行 pathogen
+execute pathogen#infect()
+
 " 设定默认解码
 set fenc=utf-8
 set fencs=utf-8,usc-bom,euc-jp,gb18030,gbk,gb2312,cp936
@@ -8,6 +13,9 @@ set fencs=utf-8,usc-bom,euc-jp,gb18030,gbk,gb2312,cp936
 "set fonts
 "set guifont=Monospace\ 11
 set guifont=Nimbus\ Mono\ L\ Regular\ Oblique\ 10
+syntax enable
+set background=light
+colorscheme solarized
 "colorscheme evening
 
 let mapleader=","
