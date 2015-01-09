@@ -22,9 +22,9 @@ set fdm=indent
 " history文件中需要记录的行数
 set history=100
 
-" set max column num
 set cc=80
 set cursorcolumn
+let g:indent_guides_guide_size=1
 
 " 在处理未保存或只读文件的时候，弹出确认
 set confirm
@@ -382,8 +382,10 @@ function UpdateCStags()
     execute ":cd " . curdir
 endfunction
 
-nmap <F8> :call UpdateCtags()<CR>
-nmap <F9> :call UpdateCStags()<CR>
+nmap <leader>t :call UpdateCtags()<CR>
+"nmap <F8> :call UpdateCtags()<CR>
+nmap <leader>c :call UpdateCStags()<CR>
+"nmap <F9> :call UpdateCStags()<CR>
 
 "---------------------------------------------------------------
 "set ident level
@@ -426,5 +428,3 @@ source $VIMRUNTIME/menu.vim
 :map \9 bi(<Esc>ea)<Esc>
 :map \[ bi[<Esc>ea]<Esc>
 :map \{ bi{<Esc>ea}<Esc>
-
-"autocmd VimLeave /var/www/html/xxx.php exe "! /bin/bash /opt/check.sh"
