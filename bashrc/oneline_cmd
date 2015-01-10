@@ -47,3 +47,22 @@ mount /dev/md0 /mnt
 #vmstat: look for system perfermace.
 vmstat 1 10
 
+# BIOS  -> MBR
+#          grub  -> kernel(bzImage) /boot/vmlinuz-3.2.0-74-generic-pae
+#                -> initrd.img      /boot/initrd.img-3.2.0-74-generic-pae
+#                   initrd.img: some drivers and kernel module
+#### compile a new kernel from source code
+#get a template .config file
+cp config-3.2.0-74-generic-pae .config
+#run make menuconfig need some package: ncurses-devel
+#(ubuntu:sudo apt-get install libncurses5-dev)
+#modify the .config file
+make menuconfig
+#compile the kernel
+make bzImage
+#compile the modules
+make modules
+make modules_install
+#install kernel: cp arch/i386/boot/bzImage /boot/vmlinuz-xxx && mkinitrd /boot/initrd-xxx.img  xxx && vi /boot/grub/grub.conf
+make install
+
