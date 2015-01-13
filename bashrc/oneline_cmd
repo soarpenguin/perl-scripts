@@ -10,6 +10,13 @@ sort -k1,1n filename
 # one line cmd display tcp/ip info.
 ss --options --extended --memory --processes --info
 ss -an | grep "TIME-WAIT" | awk '{print $NF}' | grep -P "^(\d+\.){3}(\d+):\d+$" | grep -oP "(\d+\.){3}(\d+)" | sort | uniq -c
+ss --info  sport = :2112 dport = :4057
+
+#ifconfig
+ifconfig eth0 mtu 1500
+
+#config initcwnd and initrwnd
+ip route | while read p; do echo "ip route change $p initcwnd 10 initrwnd 10"; done
 
 #tcpdump
 tcpdump tcp and src 192.168.0.1 and port 80
