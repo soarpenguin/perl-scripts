@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 for i in {0..127}; do
-    p=" $i"
-    echo -e "${p:-3} \\0$(($i/64*100+$i%64/8*10+$i%8))";
+    p=$(printf "%3d" $i)
+    ox=$(printf "%2x" $i)
+    echo -e "${p:-3} ${ox} \\0$(($i/64*100+$i%64/8*10+$i%8))";
 done | cat -t | column -c 80
 
