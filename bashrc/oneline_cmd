@@ -4,6 +4,9 @@ netstat -pant | awk '/^tcp/ {++state[$6]} END {for(key in state) printf("%-10s\t
 # one line cmd display dir file.
 ls -lR | grep -v total | awk 'BEGIN { OFS="\t"; ORS="\n-->"} {print $1,$3,$NF}'
 
+# find failure of soft links
+find . -type l | perl -lne 'print if ! -e'
+
 # sort filename by column 1
 sort -k1,1n filename
 
