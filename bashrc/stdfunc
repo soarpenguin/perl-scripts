@@ -332,6 +332,37 @@ uppercase() {
     echo "$1" | tr '[a-z]' '[A-Z]'
 }
 
-assert_not_root_user
-assert_root_user
+opt_quiet=0
+function vecho {
+	(( opt_quiet )) && return
+	echo "$@"
+}
+
+function _warn {
+    if ! eval "$@"; then
+        echo >&2 "WARNING: command failed \"$@\""
+    fi
+}
+
+# write to file
+function writefile {
+	file=$1
+	string=$2	# optional
+
+	if [[ ! -w $file ]]; then
+		echo >&2 "WARNING: file $file not writable/exists. Skipping."
+		return
+	fi
+	vecho "$file, before:"
+	(( ! opt_quiet )) && cat -n $file
+	_warn "echo $string > $file"
+	vecho "$file, after:"
+	(( ! opt_quiet )) && cat -n $file
+	vecho
+}
+
+#################################
+#assert_not_root_user
+#assert_root_user
 error "Bad news"
+writefile "test" "hello"
