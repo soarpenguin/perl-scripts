@@ -14,6 +14,8 @@ $result = check_setup_file("_bash_history", '~/.bash_history');
 
 $result = check_setup_file("_bashrc", '~/.bashrc');
 
+$result = check_setup_file("_screenrc", '~/.screenrc');
+
 my $cmd = "mkdir -p ~/.vim";
 $result = run_and_check_result($cmd);
 $cmd = "touch ~/.vim/systags";
@@ -53,10 +55,10 @@ sub run_and_check_result
         print color("reset"); 
         $result = $EOS_ERR;
     } else {
-            print color("blue");
-            print "run $cmd successed!\n";
-            print color("reset"); 
-            $result = $EOS_OK; 
+        print color("blue");
+        print "run $cmd successed!\n";
+        print color("reset");
+        $result = $EOS_OK;
     }
     return $result;
 }
