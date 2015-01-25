@@ -10,6 +10,9 @@ find . -type l | perl -lne 'print if ! -e'
 # sort filename by column 1
 sort -k1,1n filename
 
+#static memory for process
+ps -eo fname,rss | awk '{arr[$1]+=$2} END {for (i in arr) {print i,arr[i]}}' | sort -k2 -nr | column -t
+
 # one line cmd display tcp/ip info.
 ss --options --extended --memory --processes --info
 ss -an | grep "TIME-WAIT" | awk '{print $NF}' | grep -P "^(\d+\.){3}(\d+):\d+$" | grep -oP "(\d+\.){3}(\d+)" | sort | uniq -c
