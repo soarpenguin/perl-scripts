@@ -374,6 +374,18 @@ function UpdateCtags()
     execute ":cd " . curdir
 endfunction
 
+function UpdateAllCtags()
+    let curdir=getcwd()
+
+    if filewritable("~/.vim/systags")
+        :!ctags -I __THROW --file-scope=yes --langmap=c:+.h --languages=c,c++ --links=yes --c-kinds=+p -R -f ~/.vim/systags /usr/include /usr/local/include/
+    endif
+    if filewritable("./tags")
+        :!ctags -R
+    endif
+    execute ":cd " . curdir
+endfunction
+
 function UpdateCStags()
     let curdir=getcwd()
     while !filereadable("./cscope.out")
@@ -392,6 +404,7 @@ endfunction
 
 nmap <leader>t :call UpdateCtags()<CR>
 "nmap <F8> :call UpdateCtags()<CR>
+nmap <leader>f :call UpdateAllCtags()<CR>
 nmap <leader>c :call UpdateCStags()<CR>
 "nmap <F9> :call UpdateCStags()<CR>
 
