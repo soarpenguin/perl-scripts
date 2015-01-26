@@ -9,6 +9,7 @@ CURDIR=$(cd "$(dirname "$0")"; pwd)
 OPENTSDBCONF="$CURDIR/opentsdb.conf"
 GNUPLOT="$CURDIR/gnuplot-4.6.0"
 OPENTSDB="$CURDIR/opentsdb-2.0.1.noarch.rpm"
+#OPENTSDB="$CURDIR/opentsdb-2.1.0RC1.noarch.rpm"
 STARTSCROPT="$CURDIR/run-opentsdb.sh"
 
 #---------------------function----------------------
@@ -40,22 +41,22 @@ _fatal() {
 _check_file_exists() {
     file=$1
     if [ x"$file" = "x" ]; then
-        return 1
+	return 1
     else
         if [ -f "$file" ]; then
-            return 0
+	    return 0
         else
-            return 1
+	    return 1
         fi
     fi
 }
 
 software="gd-devel.x86_64"
-_trace "install ${software}--------------------------------------"
+_trace "now install ${software}--------------------------------------"
 yum install -y "$software" || _fatal "yum install ${software} failed, please checked it."
 
 software="$GNUPLOT.tar.gz"
-_trace "install ${software}--------------------------------------"
+_trace "now install ${software}--------------------------------------"
 _check_file_exists $software || _fatal "$software is not existed"
 pushd .
 [ -d $GNUPLOT ] || tar -zxvf $software
@@ -66,7 +67,7 @@ fi
 popd
 
 software="$OPENTSDB"
-_trace "install ${software}--------------------------------------"
+_trace "now install ${software}--------------------------------------"
 _check_file_exists $OPENTSDB || _fatal "$software is not existed"
 rpm -ivh --nodeps $software
 if [ $? -ne 0 ]; then
@@ -74,13 +75,24 @@ if [ $? -ne 0 ]; then
 fi
 
 software="$OPENTSDBCONF"
-_trace "update ${software}--------------------------------------"
+_trace "now update ${software}--------------------------------------"
 _check_file_exists $OPENTSDB || _fatal "$software is not existed"
 cp -rf $OPENTSDBCONF /etc/opentsdb/opentsdb.conf
 if [ $? -ne 0 ]; then
     _fatal "update ${software} failed, please checked it."
 fi
 
-_trace "run software opentsdb--------------------------------------"
+_trace "now run software opentsdb--------------------------------------"
 bash ${STARTSCROPT}
+
+### add crontab for clean opentsdb cache under /tmp/tsdb
+username=$(whoami)
+num=$(crontab -u ${username} -l | grep "clean_cache" | wc -l)
+if [[ ${num} -gt 0 ]]; then
+    _trace "crontab for clean the opentsdb cache is existed now.-----------"
+else
+    _trace "now add crontab for clean the opentsdb cache-------------------"
+    line="1 1-23 * * * sh /usr/share/opentsdb/tools/clean_cache.sh &> /dev/null"
+    (crontab -u ${username} -l; echo "$line" ) | crontab -u ${username} -
+fi
 
