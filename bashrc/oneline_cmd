@@ -57,8 +57,14 @@ mount /dev/md0 /mnt
 #mysql
 #mysql -u* -h* -p -P3306 -e "show databases" | sed -n '2,$p' | xargs -l DB 'mysqldump DB > DB.sql';
 
-#vmstat: look for system perfermace.
-vmstat 1 10
+#look for system perfermace.
+#cmd interval count
+vmstat 2 10
+iostat 2 10
+mpstat 2 10
+
+#trace network syscall for a existed PID.
+strace -p $PID -f -e trace=network -s 10000
 
 # BIOS  -> MBR
 #          grub  -> kernel(bzImage) /boot/vmlinuz-3.2.0-74-generic-pae
