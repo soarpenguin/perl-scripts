@@ -17,6 +17,7 @@ ps -eo fname,rss | awk '{arr[$1]+=$2} END {for (i in arr) {print i,arr[i]}}' | s
 ss --options --extended --memory --processes --info
 ss -an | grep "TIME-WAIT" | awk '{print $NF}' | grep -P "^(\d+\.){3}(\d+):\d+$" | grep -oP "(\d+\.){3}(\d+)" | sort | uniq -c
 ss --info  sport = :2112 dport = :4057
+ss -tan 'sport = :80' | awk '{print $(NF)" "$(NF-1)}' | sed 's/:[^ ]*//g' | sort | uniq -c
 
 #ifconfig
 ifconfig eth0 mtu 1500
@@ -62,6 +63,9 @@ mount /dev/md0 /mnt
 vmstat 2 10
 iostat 2 10
 mpstat 2 10
+sar
+slabtop
+slabtop -o | grep -E '(^  OBJS|tw_sock_TCP|tcp_bind_bucket)'
 
 #trace network syscall for a existed PID.
 strace -p $PID -f -e trace=network -s 10000
