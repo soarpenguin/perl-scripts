@@ -30,6 +30,7 @@ tcpdump tcp and src 192.168.0.1 and port 80
 # 0x4745 : [GE]T -- 0x4854 : [HT]TP
 tcpdump  -XvvennSs 0 -i eth0 tcp[20:2]=0x4745 or tcp[20:2]=0x4854
 tcpdump -i eth0 port 80 -w -
+tcpdump -nnvXSs 0 -c2 icmp
 
 #tcpflow
 tcpflow -cp -i eth0 "port 80"
@@ -57,6 +58,7 @@ mount /dev/md0 /mnt
 
 #mysql
 #mysql -u* -h* -p -P3306 -e "show databases" | sed -n '2,$p' | xargs -l DB 'mysqldump DB > DB.sql';
+#mysqldump --add-drop-table -uroot -p nowait > backupfile.sql
 
 #look for system perfermace.
 #cmd interval count
@@ -89,3 +91,6 @@ make modules_install
 #install kernel: cp arch/i386/boot/bzImage /boot/vmlinuz-xxx && mkinitrd /boot/initrd-xxx.img  xxx && vi /boot/grub/grub.conf
 make install
 
+tr -c "[:digit:]" " " < /dev/urandom | dd cbs=$COLUMNS conv=unblock | GREP_COLOR="1;32" grep --color "[^ ]"
+#display one line '#' with screen width
+printf "%`tput cols`s" | tr ' ' '#'
