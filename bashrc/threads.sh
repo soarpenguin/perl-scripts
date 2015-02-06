@@ -144,20 +144,23 @@ do
 done
 
 unset HOST
+INDEX=0
+
 while read -r HOST
 do
-    if [ "x$HOST" = "x" ]; then
-        _print_fatal "null string for hostname."
+    ((INDEX++))
+    if [ "x$HOST" == "x" ]; then
+        _print_fatal "[$INDEX] null string for hostname."
         continue
     fi
 
-    _trace "start  ${HOST} ......"
+    _trace "[$INDEX] start ${HOST} ......"
     read <&9
 
     ping -c 1 -w 3 ${HOST} &>/dev/null
 
     if [ $? -ne 0 ]; then
-        _print_fatal "Error: $HOST is unreachable."
+        _print_fatal "[$INDEX] Error: $HOST is unreachable."
         echo >&9
         continue
     fi
