@@ -6,17 +6,17 @@ PATH="$PATH:/usr/bin:/bin:/sbin:/usr/sbin"
 export PATH
 
 MYNAME="${0##*/}"
-curdir=$(cd "$(dirname "$0")"; pwd);
+CURDIR=$(cd "$(dirname "$0")"; pwd);
 
 g_HOST_LIST=$1
 g_THREAD_NUM=300
 g_PORT=22
-tmp_file="pipe.$$"
+TMPFILE="pipe.$$"
 SSH="ssh -n -o PasswordAuthentication=no -o StrictHostKeyChecking=no -o ConnectTimeout=5 "
 SCP='scp -q -r -o PasswordAuthentication=no -o StrictHostKeyChecking=no -o ConnectTimeout=5 '
 
 ##################### function #########################
-report_err() { echo "${MYNAME}: Error: $*" >&2 ; }
+_report_err() { echo "${MYNAME}: Error: $*" >&2 ; }
 
 if [ -t 1 ]
 then
@@ -38,7 +38,7 @@ _print_fatal() {
     echo $(_hl_red '==>') "$@" >&2
 }
 
-usage() {
+_usage() {
     cat << USAGE
 Usage: bash ${MYNAME} [options] hostlist command.
 
@@ -61,9 +61,9 @@ USAGE
 
 #
 # Parses command-line options.
-#  usage: parse_options "$@" || exit $?
+#  usage: _parse_options "$@" || exit $?
 #
-function parse_options()
+_parse_options()
 {
     declare -a argv
 
@@ -107,18 +107,18 @@ function parse_options()
             g_CMD="${argv[1]}"
             ;;
         0|*)
-            usage 1>&2
+            _usage 1>&2
             return 1
 	;;
     esac
 }
 
 ################################## main route #################################
-parse_options "${@}" || usage
+_parse_options "${@}" || _usage
 
 if [ ! -e $g_HOST_LIST ]; then
     _print_fatal "machine list file $g_HOST_LIST is not exist."
-    usage
+    _usage
 fi
 if [ -d log ]; then
     rm -rf log
@@ -126,14 +126,14 @@ fi
 
 mkdir -p log
 
-mkfifo ${tmp_file}
-exec 9<>${tmp_file}
+mkfifo ${TMPFILE}
+exec 9<>${TMPFILE}
 
-#trap "rm -f ${tmp_file}; exit" INT TERM EXIT
-cleanup() { rm -f "${tmp_file}" ; }
+#trap "rm -f ${TMPFILE}; exit" INT TERM EXIT
+cleanup() { rm -f "${TMPFILE}" ; }
 trap cleanup EXIT TERM EXIT;
 
-#trap 'rm -f "${tmp_file}"; exit $?' INT TERM EXIT
+#trap 'rm -f "${TMPFILE}"; exit $?' INT TERM EXIT
 _trace "You run command: $HL_BLUE $g_CMD $NORMAL"
 _trace "Notice:(${HL_RED}Ctrl+C for cancel,${NORMAL} ENTER for continue, wait for 30s continue auto.)"
 read -t 30 word   # wait for 30 sec for waiting input.
@@ -148,8 +148,8 @@ INDEX=0
 
 while read -r HOST
 do
-    ((INDEX++))
-    if [ "x$HOST" == "x" ]; then
+    (( INDEX++ ))
+    if [ "x${HOST}" == "x" ]; then
         _print_fatal "[$INDEX] null string for hostname."
         continue
     fi
@@ -160,17 +160,17 @@ do
     ping -c 1 -w 3 ${HOST} &>/dev/null
 
     if [ $? -ne 0 ]; then
-        _print_fatal "[$INDEX] Error: $HOST is unreachable."
+        _print_fatal "[$INDEX] Error: ${HOST} is unreachable."
         echo >&9
         continue
     fi
 
-    (${SSH} "${HOST}" "-p ${g_PORT}" "${g_CMD}" &>${curdir}/log/${HOST}; echo >&9) &
+    (${SSH} "${HOST}" "-p ${g_PORT}" "${g_CMD}" &>${CURDIR}/log/${HOST}; echo >&9) &
     #(${SSH} ${HOST} "ls "  &>  log/${HOST}; echo >&9) &
 
 done < ${g_HOST_LIST}
 
-rm -f ${tmp_file}
+rm -f ${TMPFILE}
 #trap - INT TERM EXIT
 exec 9<&-
 
