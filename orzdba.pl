@@ -299,7 +299,7 @@ sub get_options{
                         'd|disk=s',         # IN  : print disk info
                         'n|net=s',          # IN  : print info
                         's|swap',           # OUT : print swap info
-                        'cm',              # OUT : print mysql status
+                        'com',              # OUT : print mysql status
                         'innodb_rows',      # OUT : Print Innodb Rows Status
                         'innodb_pages',     # OUT : Print Innodb Buffer Pool Pages Status
                         'innodb_data',      # OUT : Print Innodb Data Status

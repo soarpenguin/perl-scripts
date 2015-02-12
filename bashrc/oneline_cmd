@@ -1,6 +1,9 @@
 # one line cmd for static state of tcp/ip.
 netstat -pant | awk '/^tcp/ {++state[$6]} END {for(key in state) printf("%-10s\t%d\n", key,state[key])}'
 
+# system route table
+netstat -nr
+
 # one line cmd display dir file.
 ls -lR | grep -v total | awk 'BEGIN { OFS="\t"; ORS="\n-->"} {print $1,$3,$NF}'
 
