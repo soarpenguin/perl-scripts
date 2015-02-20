@@ -373,3 +373,27 @@ function log_msg()
 function command_exists {
     hash "$1" 2>/dev/null ;
 }
+
+# Use the funtions provided by Red Hat or use our own
+if [ -f /etc/rc.d/init.d/functions ]
+then
+  . /etc/rc.d/init.d/functions
+else
+  function action {
+    echo "$1"
+    shift
+    $@
+  }
+  function success {
+    echo -n "Success"
+  }
+  function failure {
+    echo -n "Failed"
+  }
+fi
+
+action "Message echo:" ls -l
+ls && \
+success "Success message." || \
+failure "Failure message."
+
