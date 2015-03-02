@@ -97,3 +97,6 @@ make install
 tr -c "[:digit:]" " " < /dev/urandom | dd cbs=$COLUMNS conv=unblock | GREP_COLOR="1;32" grep --color "[^ ]"
 #display one line '#' with screen width
 printf "%`tput cols`s" | tr ' ' '#'
+
+#install django use douban mirror.
+pip install django --index-url http://pypi.douban.com/simple
