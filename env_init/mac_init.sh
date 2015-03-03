@@ -136,6 +136,8 @@ brew update
 brew install coreutils
 # Install GNU `find`, `locate`, `updatedb`, and `xargs`, g-prefixed
 brew install findutils
+brew install diffutils
+brew install binutils
 # Install Bash 4
 brew install bash
 # Install more recent versions of some OS X tools
