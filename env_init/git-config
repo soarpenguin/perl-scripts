@@ -8,3 +8,10 @@ git config --global alias.st "status"
 git config --global user.name "soarpenguin"
 git config --global user.email "soarpenguin@gmail.com"
 
+OS=`uname -s | tr '[A-Z]' '[a-z]'`
+if [[ "$OS" == "darwin" || "$OS" == "linux" ]]; then
+    git config --global core.autocrlf input
+elif [ "$(expr substr $OS 1 5)" == "mingw" ]; then
+    git config --global core.autocrlf true
+fi
+
