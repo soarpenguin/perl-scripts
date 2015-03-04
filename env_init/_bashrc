@@ -125,14 +125,33 @@ if [ $(uname) == "Darwin" ]; then
         else
 	    touch $@ && open -a MacVim $@;
         fi
-   }
+    }
 
+    # global search and replace OSX
+    function sr {
+        find . -type f -exec sed -i '' s/$1/$2/g {} +
+    }
 else
     #function gvim {
     #    /usr/bin/gvim -geom 85x55 -f $* > /dev/null 2> /dev/null & disown
     #}
-    :
+
+    # global search and replace linux
+    function sr {
+        find . -type f -exec sed s/$1/$2/g {} +
+    }
 fi
+
+# print only column x of output
+function col {
+    awk -v col=$1 '{print $col}'
+}
+
+# skip first x words in line
+function skip {
+    n=$(($1 + 1))
+    cut -d' ' -f$n-
+}
 
 # Set colors for man pages
 man() {
