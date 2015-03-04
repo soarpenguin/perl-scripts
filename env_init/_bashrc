@@ -116,9 +116,23 @@ python*:gopen*:ping*:grep*;*:&:"
 
 #export LANG="zh_CN.UTF-8"
 
-#function gvim {
-#    /usr/bin/gvim -geom 85x55 -f $* > /dev/null 2> /dev/null & disown
-#}
+if [ $(uname) == "Darwin" ]; then
+
+    #open macvim
+    function gvim {
+        if [ -e $1 ]; then
+	    open -a MacVim $@
+        else
+	    touch $@ && open -a MacVim $@;
+        fi
+   }
+
+else
+    #function gvim {
+    #    /usr/bin/gvim -geom 85x55 -f $* > /dev/null 2> /dev/null & disown
+    #}
+    :
+fi
 
 # Set colors for man pages
 man() {
