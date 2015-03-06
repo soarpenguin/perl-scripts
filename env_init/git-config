@@ -15,3 +15,10 @@ elif [ "$(expr substr $OS 1 5)" == "mingw" ]; then
     git config --global core.autocrlf true
 fi
 
+PRIVATE="off"
+#set password cache for one day
+if [ "x$PRIVATE" == "xon" ]; then
+    git config --global credential.helper cache
+    git config --global credential.helper 'cache --timeout=36000'
+fi
+
