@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 
-AUTO_INVOKE_SUDO=yes;
-curdir=$(dirname $(readlink -f $0))
-DEST="~/.vim/bundle/"
-curuser=$(who | head -1 | awk '{print $1}')
+#set -x
+export PS4='+ [`basename ${BASH_SOURCE[0]}`:$LINENO ${FUNCNAME[0]} \D{%F %T} $$ ] '
 
-function invoke_sudo() 
+AUTO_INVOKE_SUDO=yes;
+CURDIR=$(cd "$(dirname "$0")"; pwd)
+DEST="~/.vim/bundle/"
+CURUSER=$(who | head -1 | awk '{print $1}')
+
+function _invoke_sudo()
 {
     if [ "`id -u`" != "`id -u $1`" ]; then
         echo "`whoami`:you need to be $1 privilege to run this script.";
-        if [ "$AUTO_INVOKE_SUDO" == "yes" ]; then 
+        if [ "$AUTO_INVOKE_SUDO" == "yes" ]; then
             echo "Invoking sudo ...";
             sudo -u "#`id -u $1`" bash -c "$2";
         fi
@@ -17,9 +20,9 @@ function invoke_sudo()
     fi
 }
 
-uid=`id -u`
-if [ $uid -ne '0' ]; then 
-    invoke_sudo root "${curdir}/$0 $@"
+UID=`id -u`
+if [ $UID -ne '0' ]; then
+    _invoke_sudo root "${CURDIR}/$0 $@"
 fi
 
 sudo apt-get -y install build-essential cmake
@@ -42,27 +45,28 @@ fi
 
 
 debug=1
-function log()
-{    
+function _log()
+{
         local epath=$(pwd)
         local timestamp=$(date +%Y%m%d-%H:%M:%S)
-        #echo "#######################################################################"    
-        echo "[$timestamp][$epath]$1"  
+        #echo "#######################################################################"
+        echo "[$timestamp][$epath]$1"
 }
 
-function do_cmd()
-{    
-        log "[exec] $*   please wait............"
-        if [ $debug -eq 1 ];then    
-                $@    
-        else    
-                $@ >/dev/null 2>&1    
-        fi  
-        if [[ $? -ne 0 ]];then
-                log "[fail] $@" 
-                exit 1 
-        else
-                log "[succ] $@"
-        fi  
+function _do_cmd()
+{
+    _log "[exec] $*   please wait............"
+    if [ $debug -eq 1 ]; then
+        $@
+    else
+        $@ >/dev/null 2>&1
+    fi
+
+    if [[ $? -ne 0 ]]; then
+        _log "[fail] $@"
+        exit 1
+    else
+        _log "[succ] $@"
+    fi
 }
 
