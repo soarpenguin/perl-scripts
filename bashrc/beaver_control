@@ -134,7 +134,7 @@ start() {
 
     echo -n $"Starting $PROG: "
     # if not running, start it up here, usually something like "daemon $exec"
-    ${PYTHON} ${EXEC} -c ${CONFFILE} -t ${DISPTYPE} -P ${PIDFILE} -D -l ${LOGFILE}
+    daemon ${PYTHON} ${EXEC} -c ${CONFFILE} -t ${DISPTYPE} -P ${PIDFILE} -D -l ${LOGFILE}
     retval=$?
     echo
     #[ $retval -eq 0 ] && touch $lockfile
