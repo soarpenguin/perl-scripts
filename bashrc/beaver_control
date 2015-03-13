@@ -34,12 +34,13 @@ LOGFILE="/var/log/${PROG}.log"
 EXEC="${CURDIR}/${PROG}.py"
 CONFFILE="${CURDIR}/conf/${PROG}.conf"
 DISPTYPE="redis"
+ACTION=""
 
 [ -e /etc/sysconfig/$PROG ] && . /etc/sysconfig/$PROG
 
 usage() {
     cat << USAGE
-Usage: bash ${MYNAME} [-h] [-c CONFIG] [-l OUTPUT] [-P PID]
+Usage: bash ${MYNAME} [-h] [-c CONFIG] [-l OUTPUT] [-P PID] -d
                  [-t {mqtt,rabbitmq,redis,sqs,stdout,tcp,udp,zmq,http}] 
                  action {start|stop|status|restart|condrestart|try-restart|reload|force-reload}
 
@@ -47,6 +48,7 @@ Beaver control scripts.
 
 Optional arguments:
   -h, --help            show this help message and exit
+  -d, --debug           open debug mode
   -c CONFIG             ini config file, default: ${CONFFILE}
   -l OUTPUT, -o OUTPUT  file to pipe output to, default: ${LOGFILE}
   -P PID                path to pid file, default: ${PIDFILE}
@@ -88,6 +90,10 @@ parse_options() {
             -h|--help)
             	usage
             	exit
+            	;;
+            -d|--debug)
+            	DEBUG=1
+            	shift
             	;;
             --)
             	shift
@@ -134,7 +140,11 @@ start() {
 
     echo -n $"Starting $PROG: "
     # if not running, start it up here, usually something like "daemon $exec"
-    daemon ${PYTHON} ${EXEC} -c ${CONFFILE} -t ${DISPTYPE} -P ${PIDFILE} -D -l ${LOGFILE}
+    if [ x"$DEBUG" == "x" ]; then
+        daemon ${PYTHON} ${EXEC} -c ${CONFFILE} -t ${DISPTYPE} -P ${PIDFILE} -D -l ${LOGFILE}
+    else
+        daemon ${PYTHON} ${EXEC} -c ${CONFFILE} -t ${DISPTYPE} -P ${PIDFILE} -D -l ${LOGFILE} -d
+    fi
     retval=$?
     echo
     #[ $retval -eq 0 ] && touch $lockfile
@@ -151,9 +161,38 @@ stop() {
     return $retval
 }
 
-restart() {
+pstatus () {
+    if pgrep -f "${PYTHON} ${EXEC}" >/dev/null; then
+        echo "$PROG" running
+        return 0
+    fi
+    return 1
+}
+
+forcestop() {
+    echo "Stopping $PROG"
+    pkill $1 -f "${PYTHON} ${EXEC}"
+}
+
+forcerestart () {
     stop
+    try=1
+    sleep 1
+    while pstatus; do
+        try=$((try + 1))
+        if [ $try -gt 3 ]; then
+            forcestop -9
+        else
+            forcestop
+        fi
+        echo "Waiting for $PROG to die.."
+        sleep 5
+    done
     start
+}
+
+restart() {
+    forcerestart
 }
 
 reload() {
