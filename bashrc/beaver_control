@@ -57,6 +57,7 @@ Optional arguments:
 
 Require:
     action  {start|stop|status|restart|condrestart|try-restart|reload|force-reload}
+
 USAGE
 
     exit 1
@@ -163,14 +164,14 @@ stop() {
 
 pstatus () {
     if pgrep -f "${PYTHON} ${EXEC}" >/dev/null; then
-        echo "$PROG" running
+        #echo "$PROG" running
         return 0
     fi
     return 1
 }
 
 forcestop() {
-    echo "Stopping $PROG"
+    echo "Force stopping $PROG"
     pkill $1 -f "${PYTHON} ${EXEC}"
 }
 
@@ -223,6 +224,7 @@ case "${ACTION}" in
     stop)
         rh_status_q || exit 0
         ${ACTION}
+        pstatus && forcestop -9
         ;;
     restart)
         ${ACTION}
