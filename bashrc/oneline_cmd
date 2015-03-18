@@ -24,6 +24,12 @@ ss -tan 'sport = :80' | awk '{print $(NF)" "$(NF-1)}' | sed 's/:[^ ]*//g' | sort
 
 #ifconfig
 ifconfig eth0 mtu 1500
+ifconfig eth0 down
+ifconfig eth0 up
+
+# display network and route
+ip route show
+ip ro add 10.0.0.0/8 via 10.11.11.254
 
 #config initcwnd and initrwnd
 ip route | while read p; do echo "ip route change $p initcwnd 10 initrwnd 10"; done
