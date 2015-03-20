@@ -1,0 +1,233 @@
+#!/bin/sh
+#
+# nutcracker_control <summary>
+# description: Starts and stops a single nutcracker instance on this system 
+#
+
+### BEGIN INIT INFO
+### END INIT INFO
+
+#
+# init.d / servicectl compatibility (openSUSE)
+#
+if [ -f /etc/rc.status ]; then
+    . /etc/rc.status
+    rc_reset
+fi
+
+#
+# Source function library.
+#
+if [ -f /etc/rc.d/init.d/functions ]; then
+    . /etc/rc.d/init.d/functions
+fi
+
+#set -x
+export PS4='+ [`basename ${BASH_SOURCE[0]}`:$LINENO ${FUNCNAME[0]} \D{%F %T} $$ ] '
+
+MYNAME="${0##*/}"
+CURDIR=$(cd "$(dirname "$0")"; pwd)
+PROG="nutcracker"
+PIDFILE="/var/run/${PROG}.pid"
+LOGFILE="/var/log/${PROG}.log"
+EXEC="${CURDIR}/${PROG}"
+CONFFILE="${CURDIR}/conf/${PROG}.yml"
+ACTION=""
+DAEMON=1
+
+[ -e /etc/sysconfig/$PROG ] && . /etc/sysconfig/$PROG
+
+usage() {
+    cat << USAGE
+Usage: bash ${MYNAME} [-h] [-c CONFIG] [-p PID] -d
+                 action {start|stop|status|restart|condrestart|try-restart|reload|force-reload}
+
+Nutcracker control scripts.
+
+Optional arguments:
+  -h, --help            show this help message and exit.
+  -d                    run program not in daemon mode(default: ${DAEMON}).
+  -c CONFIG             ini config file, default: ${CONFFILE}
+  -p PID                path to pid file, default: ${PIDFILE}
+
+Require:
+    action  {start|stop|status|restart|condrestart|try-restart|reload|force-reload}
+
+USAGE
+
+    exit 1
+}
+
+#
+# Parses command-line options.
+#  usage: parse_options "$@" || exit $?
+#
+parse_options() {
+    declare -a argv
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -c)
+                CONFFILE="${2}"
+                shift 2
+                ;;
+            -p|--pid)
+                PIDFILE="${2}"
+                shift 2
+                ;;
+            -h|--help)
+                usage
+                exit
+                ;;
+            -d)
+                DAEMON=0
+                shift
+                ;;
+            --)
+                shift
+                argv=("${argv[@]}" "${@}")
+                break
+                ;;
+            -*)
+                echo "command line: unrecognized option $1" >&2
+                return 1
+                ;;
+            *)
+                argv=("${argv[@]}" "${1}")
+                shift
+                ;;
+        esac
+    done
+
+    case ${#argv[@]} in
+        1)
+            ACTION="${argv[0]}"
+            ;;
+        0|*)
+            usage 1>&2
+            return 1
+        ;;
+    esac
+}
+
+check_program() {
+
+    if [ ! -x "$EXEC" ]; then
+        echo "Could not find any executable ${PROG}, please check it first."
+        exit 1
+    fi
+}
+
+start() {
+    check_program
+
+    echo -n $"Starting $PROG: "
+    # if not running, start it up here, usually something like "daemon $exec"
+    if [ x"$DAEMON" == "x0" ]; then
+        daemon ${EXEC} -c ${CONFFILE} -p ${PIDFILE}
+    else
+        daemon ${EXEC} -c ${CONFFILE} -p ${PIDFILE} -d
+    fi
+    retval=$?
+    echo
+    #[ $retval -eq 0 ] && touch $lockfile
+    return $retval
+}
+
+stop() {
+    echo -n $"Stopping $PROG: "
+    # stop it here, often "killproc $PROG"
+    killproc -p $PIDFILE -d 20 $PROG
+    retval=$?
+    echo
+    #[ $retval -eq 0 ] && rm -f $lockfile
+    return $retval
+}
+
+pstatus () {
+    if pgrep -f "${EXEC}" >/dev/null; then
+        #echo "$PROG" running
+        return 0
+    fi
+    return 1
+}
+
+forcestop() {
+    echo "Force stopping $PROG"
+    pkill $1 -f "${EXEC}"
+}
+
+forcerestart () {
+    stop
+    try=1
+    sleep 1
+    while pstatus; do
+        try=$((try + 1))
+        if [ $try -gt 3 ]; then
+            forcestop -9
+        else
+            forcestop
+        fi
+        echo "Waiting for $PROG to die.."
+        sleep 5
+    done
+    start
+}
+
+restart() {
+    forcerestart
+}
+
+reload() {
+    restart
+}
+
+force_reload() {
+    restart
+}
+
+rh_status() {
+    # run checks to determine if the service is running or use generic status
+    status -p ${PIDFILE} ${PROG}
+}
+
+rh_status_q() {
+    rh_status >/dev/null 2>&1
+}
+
+################################## main route #################################
+parse_options "${@}" || usage
+
+case "${ACTION}" in
+    start)
+        rh_status_q && exit 0
+        ${ACTION}
+        ;;
+    stop)
+        rh_status_q || exit 0
+        ${ACTION}
+        pstatus && forcestop -9
+        ;;
+    restart)
+        ${ACTION}
+        ;;
+    reload)
+        rh_status_q || exit 7
+        ${ACTION}
+        ;;
+    force-reload)
+        force_reload
+        ;;
+    status)
+        rh_status
+        ;;
+    condrestart|try-restart)
+        rh_status_q || exit 0
+        restart
+        ;;
+    *)
+        echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|force-reload}"
+        exit 2
+esac
+exit $?
+
