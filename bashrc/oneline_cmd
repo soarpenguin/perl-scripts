@@ -35,6 +35,16 @@ ip ro add 10.0.0.0/8 via 10.11.11.254
 ip route | while read p; do echo "ip route change $p initcwnd 10 initrwnd 10"; done
 
 #tcpdump
+#tcpdump [ -AdDeflLnNOpqRStuUvxX ] [ -c count ]
+#        [ -C file_size ] [ -F file ]
+#        [ -i interface ] [ -m module ] [ -M secret ]
+#        [ -r file ] [ -s snaplen ] [ -T type ] [ -w file ]
+#        [ -W filecount ]
+#        [ -E spi@ipaddr algo:secret,...  ]
+#        [ -y datalinktype ] [ -Z user ]
+#        [ expression ]
+# expression (type:net,host,port) (dir:src,dst,src and dst, src or dst) (proto)
+#
 tcpdump tcp and src 192.168.0.1 and port 80
 # 0x4745 : [GE]T -- 0x4854 : [HT]TP
 tcpdump  -XvvennSs 0 -i eth0 tcp[20:2]=0x4745 or tcp[20:2]=0x4854
@@ -45,13 +55,14 @@ tcpdump -nnvXSs 0 -c2 icmp
 tcpflow -cp -i eth0 "port 80"
 
 #iptables
+#iptables [-t table] command [match] [target/jump]
+# -t --table: table(filter, nat, mangle, raw)
+# -A -D -I -R: chain  -L,--lsit,-F,--flush,-Z,-N,-X,-P,-E
+# match regx: tcp,udp,icmp,limit,mac,mark,owner,state,tos,ttl
+# -j target:(ACCEPT, DROP, REJECT)
 iptables -A INPUT -p tcp --dport 80 -m time --timestart 09:00 --timestop 18:00 -j DROP
 iptables -A INPUT -s 192.168.1.0/24 -p tcp --dport 22 -j ACCEPT
 iptables -t filter -A INPUT -s 192.168.1.1 -j DROP
-#-t --table: table(filter, nat, mangle, raw)
-#-A -D -I -R: chain
-#match regx
-#action (ACCEPT, DROP, REJECT)
 
 #RAID0
 mdadm -C /dev/md0 -a yes -l 0 -n 2 /dev/sdb /dev/sdc
