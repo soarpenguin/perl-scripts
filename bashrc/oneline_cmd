@@ -118,6 +118,12 @@ printf "%`tput cols`s" | tr ' ' '#'
 #install django use douban mirror.
 pip install django --index-url http://pypi.douban.com/simple
 
+# (?=exp)  pre match
+# (?!exp)  pre not match
+# (?<=exp) post match
+# (?<!exp) post not match
+# regx (?<=<(\w+)>).*(?=<\/\1>) for html tag
+
 # checks to [192.168.32.208]: host [32.208 xuebao] not found
 # match [xxx] and [xxx] content.
 grep -Po '(?<=\[)[^]]+'
