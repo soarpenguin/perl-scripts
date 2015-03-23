@@ -117,3 +117,8 @@ printf "%`tput cols`s" | tr ' ' '#'
 
 #install django use douban mirror.
 pip install django --index-url http://pypi.douban.com/simple
+
+# checks to [192.168.32.208]: host [32.208 xuebao] not found
+# match [xxx] and [xxx] content.
+grep -Po '(?<=\[)[^]]+'
+ifconfig | grep -oP '(?<=inet addr:).*(?=  Bcast:)' | xargs -n 4
