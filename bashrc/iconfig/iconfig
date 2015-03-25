@@ -1,0 +1,43 @@
+#!/bin/sh
+#@(#) Configuration script for sysstat
+# (C) 2000-2014 Sebastien GODARD (sysstat <at> orange.fr)
+
+ASK="sh build/Ask.sh"
+
+echo ; echo
+echo Welcome to sysstat\'s  Interactive Configuration script!
+echo
+echo This script enables you to set the parameters value used by ./configure.
+echo Please enter the value for the parameters listed below.
+echo Press Return to tell ./configure to use the default value or to try to guess the proper one.
+echo "Defaut value for yes/no questions is no (parameter is NOT set)."
+echo You can enter a ? to display a help message at any time...
+echo
+
+# Syntax: Ask <QUESTION> <PARM> <TEXT_FILE>
+
+# Installation directory
+PREFIX=`${ASK} 'Installation directory:' "--prefix" "prefix"`
+if [ "${PREFIX}" != "" ]; then
+	PREFIX="--prefix=${PREFIX} "
+fi
+
+# sa2 processes data file of the day before
+YESTERDAY=`${ASK} 'sa2 uses daily data file of the day before? (y/n)' "--enable-yesterday" "yesterday"`
+if [ "${YESTERDAY}" = "y" ]; then
+	YESTERDAY="--enable-yesterday "
+else
+	YESTERDAY=""
+	echo "Parameter --enable-yesterday is NOT set"
+fi
+
+#echo
+#echo "./configure ${PREFIX}${SA_LIB_DIR}${SA_DIR}${SYSCONFIG_DIR}${CLEAN_SA_DIR}${NLS} \
+#${YESTERDAY}${HISTORY}${COMPRESSAFTER}${PREALLOC_ANSWER}${MAN}${IGNORE_MAN}${CRON}${RCDIR} \
+#${COMPRESSMANPG}${INSTALL_DOC}${DEBUGINFO}${INSTALL_ISAG}${SENSORS}${STRIP}${COPY_ONLY}"
+#echo
+#
+#./configure ${PREFIX}${SA_LIB_DIR}${SA_DIR}${SYSCONFIG_DIR}${CLEAN_SA_DIR}${NLS} \
+#${YESTERDAY}${HISTORY}${COMPRESSAFTER}${PREALLOC_ANSWER}${MAN}${IGNORE_MAN}${CRON}${RCDIR} \
+#${COMPRESSMANPG}${INSTALL_DOC}${DEBUGINFO}${INSTALL_ISAG}${SENSORS}${STRIP}${COPY_ONLY}
+
