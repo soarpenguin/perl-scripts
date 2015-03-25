@@ -2,6 +2,31 @@
 netstat -pant | awk '/^tcp/ {++state[$6]} END {for(key in state) printf("%-10s\t%d\n", key,state[key])}'
 
 # system route table
+# Routing tables
+#
+# Internet:
+# Destination        Gateway            Flags        Refs      Use   Netif Expire
+# default            192.168.1.1        UGSc          107        0     en0
+# 127                127.0.0.1          UCS             0        0     lo0
+# 127.0.0.1          127.0.0.1          UH              8     5362     lo0
+# 169.254            link#4             UCS             0        0     en0
+# 192.168.1          link#4             UCS             0        0     en0
+# 192.168.1.1/32     link#4             UCS             1        0     en0
+# 192.168.1.1        ec:88:8f:2d:d4:74  UHLWIir       110       24     en0   1169
+# 192.168.1.106/32   link#4             UCS             0        0     en0
+#
+#
+# Kernel IP routing table
+# Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+# 10.103.11.0     0.0.0.0         255.255.255.0   U         0 0          0 eth0
+# 169.254.0.0     0.0.0.0         255.255.0.0     U         0 0          0 eth0
+# 10.0.0.0        10.103.11.254   255.0.0.0       UG        0 0          0 eth0
+#
+# Flags: U Indicates route is up;
+#        G Route is to a gateway;
+#        H Route is to a host and not a network;
+#        M Table entry is modified by ICMP redirect message;
+#        D Route was created dynamically or by ICMP redirect;
 netstat -nr
 
 # one line cmd display dir file.
