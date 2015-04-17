@@ -172,3 +172,9 @@ pip install django --index-url http://pypi.douban.com/simple
 # match [xxx] and [xxx] content.
 grep -Po '(?<=\[)[^]]+'
 ifconfig | grep -oP '(?<=inet addr:).*(?=  Bcast:)' | xargs -n 4
+
+# awk usage
+#   pattern   { action statements }
+#   function name(parameter list) { statements }
+#   awk '/pattern/ { action }' and '{if($1==pattern) action}' 
+ps aux | awk '{if($1=="root") print $(NF-1)}'
