@@ -62,6 +62,7 @@ iptraf
 tcpdump tcp and src 192.168.0.1 and port 80
 # 0x4745 : [GE]T -- 0x4854 : [HT]TP
 tcpdump  -XvvennSs 0 -i eth0 tcp[20:2]=0x4745 or tcp[20:2]=0x4854
+tcpdump  -XvvnnSs 0 -i any host 10.10.0.20 and port 389
 tcpdump -i eth0 port 80 -w -
 tcpdump -nnvXSs 0 -c2 icmp
 
