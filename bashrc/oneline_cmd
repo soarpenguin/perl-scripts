@@ -186,5 +186,8 @@ ps aux | awk '{if($1=="root") print $(NF-1)}'
 #127.0.0.1:6379> info
 #127.0.0.1:6379> info memory
 #127.0.0.1:6379> slowlog get
+#127.0.0.1:6379> config set slowlog-log-slower-than 5000
+#127.0.0.1:6379> info clients
+#127.0.0.1:6379> config set maxclients 10000
 #127.0.0.1:6379> monitor
 
