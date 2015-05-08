@@ -157,21 +157,34 @@ fi
 unset SOFT
 while read -r SOFT
 do
+    echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+
     if [ "x$SOFT" = "x" ]; then
-        _print_fatal "null string for software."
+        _print_fatal "Warn: null string for software."
         continue
+    else
+        _trace "Notice: start install ${SOFT} ......"
     fi
 
-    echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-    _trace "start install ${SOFT} ......"
+    fchar=`echo $SOFT | cut -c -1`
+
+    if [ "x$fchar" = "x#" ]; then
+        soft=`echo $SOFT | cut -c 2-`
+        _print_fatal "Warn: skip install $soft"
+        unset soft
+        continue
+    fi
+    unset fchar
 
     CMD="$package_manager install -y $SOFT"
-    $CMD
+    ret=`$CMD`
 
     if [ $? -ne 0 ]; then
         _print_fatal "Error: $SOFT is install failed."
-        exit 1
+        #exit 1
+    else
+        _trace "Succ: $SOFT is installed."
     fi
 
-done < ${g_LIST}
+done < "${g_LIST}"
 
