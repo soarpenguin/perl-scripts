@@ -180,6 +180,12 @@ ifconfig | grep -oP '(?<=inet addr:).*(?=  Bcast:)' | xargs -n 4
 #   awk '/pattern/ { action }' and '{if($1==pattern) action}' 
 ps aux | awk '{if($1=="root") print $(NF-1)}'
 
+# sed usage
+# -i[SUFFIX]: backup extension.
+# sed -i 's/100000/500000/' edit-filename
+
+#shopt -s histappend; history -a
+
 # redis
 #$./redis-cli --latency -h '127.0.0.1' -p '6379'
 #$./redis-cli 
