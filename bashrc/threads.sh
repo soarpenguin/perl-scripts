@@ -149,10 +149,18 @@ INDEX=0
 while read -r HOST
 do
     (( INDEX++ ))
+    fchar=`echo ${HOST} | cut -c -1`
+
     if [ "x${HOST}" == "x" ]; then
-        _print_fatal "[$INDEX] null string for hostname."
+        _print_fatal "Notice: null string for hostname."
+        continue
+    elif [ "x$fchar" = "x#" ]; then
+        host=`echo $HOST | cut -c 2-`
+        _print_fatal "[$INDEX] Warn: skip ${host}"
+        unset host
         continue
     fi
+    unset fchar
 
     _trace "[$INDEX] start ${HOST} ......"
     read <&9
