@@ -103,7 +103,7 @@ _parse_options()
 
     case ${#argv[@]} in
         2)
-            g_HOST_LIST=$(readlink -f "${argv[0]}")
+            command -v greadlink >/dev/null 2>&1 && g_HOST_LIST=$(greadlink -f "${argv[0]}") || g_HOST_LIST=$(readlink -f "${argv[0]}")
             g_CMD="${argv[1]}"
             ;;
         0|*)
@@ -148,6 +148,7 @@ INDEX=0
 
 while read -r HOST
 do
+    HOST=${HOST#*(:space:)}
     (( INDEX++ ))
     fchar=`echo ${HOST} | cut -c -1`
 
@@ -165,7 +166,7 @@ do
     _trace "[$INDEX] start ${HOST} ......"
     read <&9
 
-    ping -c 1 -w 3 ${HOST} &>/dev/null
+    ping -c 1 -W 3 ${HOST} &>/dev/null
 
     if [ $? -ne 0 ]; then
         _print_fatal "[$INDEX] Error: ${HOST} is unreachable."
