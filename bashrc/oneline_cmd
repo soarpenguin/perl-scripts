@@ -197,3 +197,9 @@ ps aux | awk '{if($1=="root") print $(NF-1)}'
 #127.0.0.1:6379> config set maxclients 10000
 #127.0.0.1:6379> monitor
 
+# rpm usage
+# rpm -qa --nosignature | grep elastic  # skip signature query
+# rpm -e -vv --nosignature elasticsearch-1.5.2-1  # skip signature uninstall
+# cd /var/lib/rpm && rm -rf __db* # rm lock file for rpm no respose.
+# rpm -ivh -vv --force --nosignature elasticsearch-1.5.1.rpm
+
