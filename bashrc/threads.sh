@@ -11,6 +11,7 @@ CURDIR=$(cd "$(dirname "$0")"; pwd);
 g_HOST_LIST=$1
 g_THREAD_NUM=300
 g_PORT=22
+g_LIMIT=0
 TMPFILE="pipe.$$"
 SSH="ssh -n -o PasswordAuthentication=no -o StrictHostKeyChecking=no -o ConnectTimeout=5 "
 SCP='scp -q -r -o PasswordAuthentication=no -o StrictHostKeyChecking=no -o ConnectTimeout=5 '
@@ -46,6 +47,7 @@ Options:
     -c, --concurrent num  Thread Nummber for run the command at same time, default: 1.
     -s, --ssh             Use ssh authorized_keys to login without password query from DB.
     -p, --port            Use port instead of defult port:22.
+    -l, --limit           Limit num for host to run when limit less then all host num.
     -h, --help            Print this help infomation.
 
 Require:
@@ -79,6 +81,10 @@ _parse_options()
             	;;
             -p|--port)
                 g_PORT=${2}
+            	shift 2
+            	;;
+            -l|--limit)
+                g_LIMIT=${2}
             	shift 2
             	;;
             -h|--help)
@@ -162,6 +168,13 @@ do
         continue
     fi
     unset fchar
+
+    if [ "x$g_LIMIT" != "x0" ]; then
+        if [ "$g_LIMIT" -le "$INDEX" ]; then
+            _trace "Reach limit num of $g_LIMIT"
+            break
+	fi
+    fi
 
     _trace "[$INDEX] start ${HOST} ......"
     read <&9
