@@ -16,6 +16,9 @@ TMPFILE="pipe.$$"
 SSH="ssh -n -o PasswordAuthentication=no -o StrictHostKeyChecking=no -o ConnectTimeout=5 "
 SCP='scp -q -r -o PasswordAuthentication=no -o StrictHostKeyChecking=no -o ConnectTimeout=5 '
 
+RET_OK=0
+RET_FAIL=1
+
 ##################### function #########################
 _report_err() { echo "${MYNAME}: Error: $*" >&2 ; }
 
@@ -58,7 +61,7 @@ Notice:
     please check the result output under log/hostname.
 USAGE
 
-    exit 1
+    exit $RET_OK
 }
 
 #
@@ -170,10 +173,10 @@ do
     unset fchar
 
     if [ "x$g_LIMIT" != "x0" ]; then
-        if [ "$g_LIMIT" -le "$INDEX" ]; then
+        if [ "$g_LIMIT" -lt "$INDEX" ]; then
             _trace "Reach limit num of $g_LIMIT"
             break
-	fi
+        fi
     fi
 
     _trace "[$INDEX] start ${HOST} ......"
