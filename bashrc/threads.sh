@@ -11,9 +11,13 @@ CURDIR=$(cd "$(dirname "$0")"; pwd);
 g_HOST_LIST=$1
 g_THREAD_NUM=300
 g_PORT=22
+g_LIMIT=0
 TMPFILE="pipe.$$"
 SSH="ssh -n -o PasswordAuthentication=no -o StrictHostKeyChecking=no -o ConnectTimeout=5 "
 SCP='scp -q -r -o PasswordAuthentication=no -o StrictHostKeyChecking=no -o ConnectTimeout=5 '
+
+RET_OK=0
+RET_FAIL=1
 
 ##################### function #########################
 _report_err() { echo "${MYNAME}: Error: $*" >&2 ; }
@@ -46,6 +50,7 @@ Options:
     -c, --concurrent num  Thread Nummber for run the command at same time, default: 1.
     -s, --ssh             Use ssh authorized_keys to login without password query from DB.
     -p, --port            Use port instead of defult port:22.
+    -l, --limit           Limit num for host to run when limit less then all host num.
     -h, --help            Print this help infomation.
 
 Require:
@@ -56,7 +61,7 @@ Notice:
     please check the result output under log/hostname.
 USAGE
 
-    exit 1
+    exit $RET_OK
 }
 
 #
@@ -81,6 +86,10 @@ _parse_options()
                 g_PORT=${2}
             	shift 2
             	;;
+            -l|--limit)
+                g_LIMIT=${2}
+            	shift 2
+            	;;
             -h|--help)
             	usage
             	exit
@@ -103,7 +112,7 @@ _parse_options()
 
     case ${#argv[@]} in
         2)
-            g_HOST_LIST=$(readlink -f "${argv[0]}")
+            command -v greadlink >/dev/null 2>&1 && g_HOST_LIST=$(greadlink -f "${argv[0]}") || g_HOST_LIST=$(readlink -f "${argv[0]}")
             g_CMD="${argv[1]}"
             ;;
         0|*)
@@ -148,6 +157,7 @@ INDEX=0
 
 while read -r HOST
 do
+    HOST=${HOST#*(:space:)}
     (( INDEX++ ))
     fchar=`echo ${HOST} | cut -c -1`
 
@@ -162,10 +172,17 @@ do
     fi
     unset fchar
 
+    if [ "x$g_LIMIT" != "x0" ]; then
+        if [ "$g_LIMIT" -lt "$INDEX" ]; then
+            _trace "Reach limit num of $g_LIMIT"
+            break
+        fi
+    fi
+
     _trace "[$INDEX] start ${HOST} ......"
     read <&9
 
-    ping -c 1 -w 3 ${HOST} &>/dev/null
+    ping -c 1 -W 3 ${HOST} &>/dev/null
 
     if [ $? -ne 0 ]; then
         _print_fatal "[$INDEX] Error: ${HOST} is unreachable."
